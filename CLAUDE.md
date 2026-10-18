@@ -1,11 +1,11 @@
-# CLAUDE.md — Team Rega · KBC Hackathon
+# CLAUDE.md — Team Riga · KBC Hackathon
 
-Team Rega (Bas Vannieuwenhuyse, Jure Ankenaert, Lennart Steen, Daniel Korobitsin) is building a prototype for the KBC Hackathon. Besides helping us build, you keep two files in `Presentation_workflow/` up to date that feed our pitch deck: **`pitch_story.md`** (why) and **`pitch_facts.md`** (what we built). We upload those two to our presentation workflow in the Claude app, which builds the slides in KBC's design.
+Team Riga (Bas Vannieuwenhuyse, Jure Ankenaert, Lennart Steen, Daniel Korobitsin) is building a prototype for the KBC Hackathon. Besides helping us build, you keep two files in `Presentation_workflow/` up to date that feed our pitch deck: **`pitch_story.md`** (why) and **`pitch_facts.md`** (what we built). We upload those two to our presentation workflow in the Claude app, which builds the slides in KBC's design.
 
 ## How we work together
 - Each of the four of us uses a separate Git branch. Claude Code and Codex agents work at the same time, each in its own Git worktree and branch.
 - All changes go through GitHub pull requests on `LNNRT-STN/RIGA`. The integration lead reviews and merges them.
-- Read [the collaboration skill](.claude/skills/hackathon-collaboration/SKILL.md) before changing files. Confirm your assigned task, current worktree and branch. Coordinate overlapping work through the relevant PR or the integration lead.
+- Read [the collaboration skill](.agents/skills/hackathon-collaboration/SKILL.md) before changing files. Confirm your assigned task, current worktree and branch. Coordinate overlapping work through the relevant PR or the integration lead.
 - Use English for all new UI copy, code comments, documentation, PR descriptions and team communication. The default demo locale is English (Belgium). Don't reuse non-English copy from historical reference material in the product UI.
 
 ## Project map
@@ -16,6 +16,7 @@ Team Rega (Bas Vannieuwenhuyse, Jure Ankenaert, Lennart Steen, Daniel Korobitsin
 | `discussion/idea_discussion.md` | Our own brainstorm and decisions — lowest priority source |
 | `Presentation_workflow/pitch_story.md` | Pitch story — you fill it from the three sources above |
 | `Presentation_workflow/pitch_facts.md` | Pitch facts — you generate it from the code |
+| `Presentation_workflow/pitch_script.md` | Spoken pitch script, written by the Claude app together with the slides. Don't regenerate it here; the team may edit the wording by hand |
 | `frontend/` | The prototype: React, Vite, Tailwind CSS and shadcn/ui |
 | `DESIGN.md` | KBC-inspired design tokens and UI rules — use for any UI you build |
 | `design/KBC_Bank_Brand_and_Features.md` | Full KBC brand and product research (background, not verified) |
@@ -30,15 +31,17 @@ Team Rega (Bas Vannieuwenhuyse, Jure Ankenaert, Lennart Steen, Daniel Korobitsin
 | **"update pitch facts"** | Regenerate `pitch_facts.md` from the repository |
 | **"update pitch files"** | Both, then run the pitch check |
 | **"pitch check"** | Compare story vs facts and list conflicts and gaps (don't edit either file) |
+| **"add branch &lt;name&gt; to the pitch"** (one or more branches, or "all open branches") | Read those branches without checking them out or merging, and update section 15 of `pitch_facts.md` |
 
 After any of these, end with a short summary: what changed, what's still `[missing]`, and conflicts found. Then remind us: *"Upload `pitch_story.md` and `pitch_facts.md` to the Claude chat and say 'update our presentation'."*
 
 ## Automatic updates
 The pitch files must always match the project.
-- **When to update:**
+- **When to update (on `main`):**
   - Whenever your work in a session changes `assignment/` or `discussion/`, update `pitch_story.md` before you finish.
   - Whenever it changes code, update `pitch_facts.md` before you finish.
-- **The Stop hook enforces this.** It sends you back with a reason when a pitch file is older than its sources.
+- **The Stop hook enforces this on `main` only.** It sends you back with a reason when a pitch file is older than its sources. On agent and teammate branches it stays silent, so the pitch files don't cause merge conflicts in every pull request. To run it on another branch for one session, start Claude Code with `PITCH_AUTOUPDATE=1`; `PITCH_AUTOUPDATE=0` switches it off.
+- **On a feature branch, don't edit the pitch files.** Mention in the PR what changed that the pitch should know about; the integration lead's session on `main` picks it up after the merge.
 - **Quick update (automatic):**
   - Only re-read what changed. Use `git diff` against the commit in the `pitch_facts.md` header when git is available; otherwise use the changed files the hook names.
   - Update only the affected sections and refresh the header.
@@ -70,7 +73,7 @@ The pitch files must always match the project.
 
 ## Rules for `pitch_facts.md` — what we built
 
-**Source: the repository only.** Regenerate the whole file each time, keep the headings, fill section 14 with what changed since last time.
+**Source: the repository only.** Regenerate sections 1 to 14 each time, keep the headings, fill section 14 with what changed since last time. Keep section 15 (other branches) as it is, except remove blocks for branches that are now merged into `main`.
 
 1. **Map the repo.** Read README(s), package and dependency files, entry points, routes/screens, API clients, config, tests, `.env.example` (never real secrets).
 2. **Features (section 2).** List every user-facing feature with status `working`, `partial` or `mocked` and a `path:line` as evidence.
@@ -81,6 +84,18 @@ The pitch files must always match the project.
 7. **Security, privacy, accessibility (section 10).** Record what the code really does. Don't describe intentions.
 8. **Visual assets (section 12).** List screenshots and video files in the repo with their paths. For a video, give its length, size and format, and whether it is ≤ 20 MB mp4/webm (the deck's limit). Suggest which screenshots are still worth capturing.
 9. Facts only, no adjectives. "Returns a parking recommendation in 1.2 s (measured: `npm run bench`)", not "lightning-fast smart parking".
+
+## Work on other branches (section 15 of `pitch_facts.md`)
+Use this when a teammate's work isn't merged yet but the pitch should already know about it. Run it from `main`.
+1. `git fetch origin`, then for each branch read only what it adds compared with `main`:
+   - `git log --oneline main..origin/<branch>`
+   - `git diff --stat main...origin/<branch>`
+   - `git show origin/<branch>:<path>` for the files that matter
+   Never check the branch out, merge it, or change it.
+2. In `pitch_facts.md` section 15, write one block per branch: branch name, owner if known, last commit and date, what it adds (features, screens, measured numbers), and its state: `working on the branch`, `partial` or `started`. Every line needs evidence (`origin/<branch>:path:line`).
+3. Everything in section 15 is **not merged**. Sections 1 to 14 keep describing `main` only. When a branch is merged, remove its block and let the normal facts update pick it up.
+4. If a teammate's PR description mentions something for the pitch, add it here too, marked "from the PR description".
+5. End with one line per branch saying what changed in section 15.
 
 ## Pitch check (story vs facts)
 List, without editing either file:

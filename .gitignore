@@ -10,3 +10,10 @@ coverage/
 .env.*
 !.env.example
 !.env.*.example
+
+# Python bytecode (pitch hook)
+__pycache__/
+*.pyc
+
+# Files waiting to be deleted by hand
+_to_delete/

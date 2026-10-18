@@ -1,6 +1,6 @@
 # Pitch facts — generated from our code
 
-> **What this file is:** what Team Rega actually built, taken from the repository — nothing more.
+> **What this file is:** what Team Riga actually built, taken from the repository — nothing more.
 > **Who writes it:** Claude Code in VS Code, on "update pitch facts". Regenerated in full every time; don't edit by hand (corrections go in the code or in `pitch_story.md`).
 > **Rules:** facts only, no marketing words. Every line points to evidence (`path/to/file.ts:42`, a test, a command output). If something can't be proven from the repo, it isn't here.
 
@@ -87,3 +87,10 @@ Data flow in one sentence: [ ]
 
 ## 14. Changes since the last run
 - [ ]
+
+## 15. Work on other branches, not merged yet
+*Not on `main`. The slides and script may only call these "in progress" or "next", never "working". Filled by "add branch <name> to the pitch".*
+
+| Branch | Owner | Last commit | What it adds | State | Evidence |
+|---|---|---|---|---|---|
+| | | | | working on the branch / partial / started | `origin/<branch>:path:line` |

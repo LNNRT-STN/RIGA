@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Team Rega - keep Presentation_workflow/pitch_story.md and pitch_facts.md up to date automatically.
+"""Team Riga - keep Presentation_workflow/pitch_story.md and pitch_facts.md up to date automatically.
 
 Claude Code runs this as a Stop hook every time it is about to finish a reply.
 If the assignment/discussion changed after pitch_story.md, or the code changed
@@ -7,11 +7,17 @@ after pitch_facts.md, it tells Claude to update those files before stopping.
 """
 import json
 import os
+import subprocess
 import sys
 import time
 
 # Minutes between automatic pitch_facts.md updates (avoids redoing it after every tiny edit).
 FACTS_MIN_INTERVAL_MIN = 10
+
+# Only auto-update on these branches. Every agent works on its own branch; if all of them rewrote
+# the pitch files, every pull request would conflict on them. Override per session with
+# PITCH_AUTOUPDATE=1 (always) or PITCH_AUTOUPDATE=0 (never).
+AUTOUPDATE_BRANCHES = {"main"}
 
 PITCH_DIR = "Presentation_workflow"
 STORY_FILE = PITCH_DIR + "/pitch_story.md"
@@ -20,7 +26,8 @@ STORY_SOURCES = ["assignment", "discussion"]
 # Everything else in the repo counts as "code" for the facts, except these:
 FACTS_EXCLUDE_TOP = {
     "assignment", "discussion", "design", ".claude", ".git", ".github", ".vscode", ".idea",
-    PITCH_DIR, "CLAUDE.md",
+    PITCH_DIR, "CLAUDE.md", "AGENTS.md", "DESIGN.md", "readme.md", "README.md", "vendor",
+    ".gitignore", ".gitmodules",
 }
 IGNORE_DIRS = {
     ".git", "node_modules", ".venv", "venv", "env", "__pycache__", "dist", "build", ".next",
@@ -73,6 +80,20 @@ def main():
         return 0
 
     root = os.environ.get("CLAUDE_PROJECT_DIR") or data.get("cwd") or os.getcwd()
+
+    flag = os.environ.get("PITCH_AUTOUPDATE", "").strip()
+    if flag == "0":
+        return 0
+    if flag != "1":
+        try:
+            branch = subprocess.run(
+                ["git", "-C", root, "branch", "--show-current"],
+                capture_output=True, text=True, timeout=5,
+            ).stdout.strip()
+        except Exception:
+            branch = ""
+        if branch and branch not in AUTOUPDATE_BRANCHES:
+            return 0
     story_path = os.path.join(root, STORY_FILE)
     facts_path = os.path.join(root, FACTS_FILE)
     if not os.path.exists(story_path) and not os.path.exists(facts_path):
@@ -95,7 +116,16 @@ def main():
     ]
     code_m, code_file = newest_mtime(code_paths, root)
     facts_m = mtime(facts_path)
-    if code_m > facts_m + 1 and (time.time() - facts_m) > FACTS_MIN_INTERVAL_MIN * 60:
+    try:
+        facts_is_template = "Generated: [YYYY" in open(facts_path, encoding="utf-8").read(4000)
+    except OSError:
+        facts_is_template = False
+    if facts_is_template and code_file:
+        tasks.append(
+            f"{FACTS_FILE} has never been generated. Run a full 'update pitch facts' from the repository "
+            "(CLAUDE.md > Rules for pitch_facts.md)."
+        )
+    elif code_m > facts_m + 1 and (time.time() - facts_m) > FACTS_MIN_INTERVAL_MIN * 60:
         tasks.append(
             f"{FACTS_FILE} is out of date ({code_file} changed). Run a quick 'update pitch facts': "
             "check what changed since the commit/time in its header (git diff if available), update only the "

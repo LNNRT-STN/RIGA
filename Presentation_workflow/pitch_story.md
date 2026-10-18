@@ -1,4 +1,4 @@
-# Pitch story — Team Rega · KBC Hackathon
+# Pitch story — Team Riga · KBC Hackathon
 
 > **What this file is:** the *why* behind our pitch — customer, problem, insight, impact, ask, and the event rules.
 > **Who writes it:** the team, with Claude Code filling it from `assignment/assignment.md`, everything else in `assignment/`, and `discussion/idea_discussion.md` (in that order of priority).
@@ -34,7 +34,7 @@ Source: [file]
 ---
 
 ## 1. Team `[confirmed]`
-Team name: **Rega**
+Team name: **Riga**
 
 | Name | Role in the team | One credential that matters for this challenge |
 |---|---|---|
