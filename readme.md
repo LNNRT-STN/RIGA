@@ -52,6 +52,6 @@ All customer data is fictional, and transfers are simulated.
 The team's [Multica](https://multica.ai/) workspace `riga` has two agents that run on the integration lead's machine:
 
 - **Claude** picks up assigned issues, works on an `agent/claude/<task>` branch, and opens a pull request against `main`.
-- **Integration Lead** reviews pull requests against `main`. A GitHub webhook starts it when a pull request is opened, reopened, marked ready for review, or updated. It runs `npm run lint` and `npm run build` when `frontend/` changed, then merges ready pull requests or requests changes.
+- **Integration Lead** reviews pull requests against `main`. A GitHub webhook starts it when a pull request is opened, reopened, marked ready for review, or updated. It runs `npm run lint` and `npm run build` when `frontend/` changed, then merges ready pull requests, requests changes, or leaves them for a human when they change agent instructions or the workflow.
 
 The agents only run while the integration lead's machine is online with Multica open.
