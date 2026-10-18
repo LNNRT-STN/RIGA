@@ -25,3 +25,14 @@ npm run dev
 The frontend includes Tailwind CSS and [shadcn/ui](https://ui.shadcn.com/docs/installation/vite). The project configuration is in `frontend/components.json`; reusable components live in `frontend/src/components/ui/`. To add another component, run `npx shadcn@latest add <component>` from `frontend/`, then align its styles and copy with `DESIGN.md`. All new UI and team documentation should be in English.
 
 Keep local configuration in `frontend/.env.local`, which Git ignores. Commit only safe variable names and placeholders in an `.env.example` when the app needs them. Do not put secrets in `VITE_` variables: Vite includes their values in the browser bundle. Share development credentials through the team's password manager, and use GitHub Actions secrets only for workflows.
+
+### iPhone mockup
+
+`npm run dev` opens a working KBC Mobile replica inside an iPhone frame, scaled to fit the screen for projector demos. On a real phone (touch screen up to 520px wide) the frame is dropped and the app runs full screen.
+
+- `src/components/device/iphone-frame.tsx`: device frame, status bar and safe areas.
+- `src/kbc/`: the app. Screens live in `screens/`, demo data in `data.ts`, navigation and state in `store.tsx`.
+- `src/kbc/kate.ts`: scripted Kate replies. Replace `getKateReply` with a call to our backend to show the final product inside the app.
+- Photo slots use stand-in artwork; pass an `image` path to `Artwork` or `PromoCard` to use real images from `public/`.
+
+All customer data is fictional, and transfers are simulated.
