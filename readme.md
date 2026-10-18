@@ -46,3 +46,12 @@ Then paste the key from the team's password manager into `.env`. Keep the key in
 - Photo slots use stand-in artwork; pass an `image` path to `Artwork` or `PromoCard` to use real images from `public/`.
 
 All customer data is fictional, and transfers are simulated.
+
+## Multica agents
+
+The team's [Multica](https://multica.ai/) workspace `riga` has two agents that run on the integration lead's machine:
+
+- **Claude** picks up assigned issues, works on an `agent/claude/<task>` branch, and opens a pull request against `main`.
+- **Integration Lead** reviews pull requests against `main`. A GitHub webhook starts it when a pull request is opened, reopened, marked ready for review, or updated. It runs `npm run lint` and `npm run build`, then merges ready pull requests or requests changes.
+
+The agents only run while the integration lead's machine is online with Multica open.
