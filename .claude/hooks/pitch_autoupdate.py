@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Team Rega - keep pitch_story.md and pitch_facts.md up to date automatically.
+"""Team Rega - keep Presentation_workflow/pitch_story.md and pitch_facts.md up to date automatically.
 
 Claude Code runs this as a Stop hook every time it is about to finish a reply.
 If the assignment/discussion changed after pitch_story.md, or the code changed
@@ -13,13 +13,14 @@ import time
 # Minutes between automatic pitch_facts.md updates (avoids redoing it after every tiny edit).
 FACTS_MIN_INTERVAL_MIN = 10
 
-STORY_FILE = "pitch_story.md"
-FACTS_FILE = "pitch_facts.md"
+PITCH_DIR = "Presentation_workflow"
+STORY_FILE = PITCH_DIR + "/pitch_story.md"
+FACTS_FILE = PITCH_DIR + "/pitch_facts.md"
 STORY_SOURCES = ["assignment", "discussion"]
 # Everything else in the repo counts as "code" for the facts, except these:
 FACTS_EXCLUDE_TOP = {
     "assignment", "discussion", "design", ".claude", ".git", ".github", ".vscode", ".idea",
-    STORY_FILE, FACTS_FILE, "CLAUDE.md",
+    PITCH_DIR, "CLAUDE.md",
 }
 IGNORE_DIRS = {
     ".git", "node_modules", ".venv", "venv", "env", "__pycache__", "dist", "build", ".next",
@@ -83,7 +84,7 @@ def main():
     src_m, src_file = newest_mtime([p for p in STORY_SOURCES if os.path.exists(os.path.join(root, p))], root)
     if src_m > mtime(story_path) + 1:
         tasks.append(
-            f"pitch_story.md is out of date ({src_file} changed). Run a quick 'update pitch story': "
+            f"{STORY_FILE} is out of date ({src_file} changed). Run a quick 'update pitch story': "
             "re-read only the changed source files and update the affected sections; keep [confirmed] fields."
         )
 
@@ -96,7 +97,7 @@ def main():
     facts_m = mtime(facts_path)
     if code_m > facts_m + 1 and (time.time() - facts_m) > FACTS_MIN_INTERVAL_MIN * 60:
         tasks.append(
-            f"pitch_facts.md is out of date ({code_file} changed). Run a quick 'update pitch facts': "
+            f"{FACTS_FILE} is out of date ({code_file} changed). Run a quick 'update pitch facts': "
             "check what changed since the commit/time in its header (git diff if available), update only the "
             "affected sections, refresh the header and section 14. Facts only, with evidence paths."
         )
