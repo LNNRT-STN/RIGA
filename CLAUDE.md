@@ -5,3 +5,7 @@ This is a four-person hackathon repository. Each person uses a separate Git bran
 Read [the collaboration skill](.claude/skills/hackathon-collaboration/SKILL.md) before changing files. Confirm your assigned task and current Git worktree and branch. Coordinate overlapping work through the relevant PR or the integration lead.
 
 For product work, use `DESIGN.md` for UI direction and relevant sections of `KBC_information.md` for background. Use the repo's `impeccable` skill for UI and UX work; it is pinned as a submodule and linked at `.claude/skills/impeccable`.
+
+Use English for all new UI copy, code comments, documentation, PR descriptions, and team communication. The default demo locale is English (Belgium). Do not reuse non-English copy from historical reference material in the product UI.
+
+The frontend uses React, Vite, Tailwind CSS, and shadcn/ui. Reuse components from `frontend/src/components/ui` where appropriate, and keep their tokens aligned with `DESIGN.md`.
