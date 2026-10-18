@@ -1,0 +1,7 @@
+# RIGA agent context
+
+This is a four-person hackathon repository. Each person uses a separate Git branch. Claude Code and Codex agents work concurrently in separate Git worktrees and branches. All changes go through GitHub pull requests; the integration lead reviews and merges them.
+
+Read [the collaboration skill](.claude/skills/hackathon-collaboration/SKILL.md) before changing files. Confirm your assigned task and current Git worktree and branch. Coordinate overlapping work through the relevant PR or the integration lead.
+
+For product work, use `DESIGN.md` for UI direction and relevant sections of `KBC_information.md` for background. Use the repo's `impeccable` skill for UI and UX work; it is pinned as a submodule and linked at `.claude/skills/impeccable`.
