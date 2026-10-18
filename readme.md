@@ -26,6 +26,16 @@ The frontend includes Tailwind CSS and [shadcn/ui](https://ui.shadcn.com/docs/in
 
 Keep local configuration in `frontend/.env.local`, which Git ignores. Commit only safe variable names and placeholders in an `.env.example` when the app needs them. Do not put secrets in `VITE_` variables: Vite includes their values in the browser bundle. Share development credentials through the team's password manager, and use GitHub Actions secrets only for workflows.
 
+### OpenRouter key
+
+Server-side code reads `OPENROUTER_API_KEY` from a `.env` file in the repository root. To set it up:
+
+```sh
+cp .env.example .env
+```
+
+Then paste the key from the team's password manager into `.env`. Keep the key in server-side code only, never in `frontend/` or a `VITE_` variable, because anything the browser loads can be read by anyone using the app. If a key leaks, tell the integration lead so they can revoke it on [OpenRouter](https://openrouter.ai/settings/keys).
+
 ### iPhone mockup
 
 `npm run dev` opens a working KBC Mobile replica inside an iPhone frame, scaled to fit the screen for projector demos. On a real phone (touch screen up to 520px wide) the frame is dropped and the app runs full screen.
