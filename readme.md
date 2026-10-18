@@ -22,4 +22,6 @@ npm run dev
 
 `npm run lint` checks source files and `npm run build` checks TypeScript and creates a production build. Add application screens in `frontend/src/`; use `DESIGN.md` for the prototype's visual rules.
 
+The frontend includes Tailwind CSS and [shadcn/ui](https://ui.shadcn.com/docs/installation/vite). The project configuration is in `frontend/components.json`; reusable components live in `frontend/src/components/ui/`. To add another component, run `npx shadcn@latest add <component>` from `frontend/`, then align its styles and copy with `DESIGN.md`. All new UI and team documentation should be in English.
+
 Keep local configuration in `frontend/.env.local`, which Git ignores. Commit only safe variable names and placeholders in an `.env.example` when the app needs them. Do not put secrets in `VITE_` variables: Vite includes their values in the browser bundle. Share development credentials through the team's password manager, and use GitHub Actions secrets only for workflows.
