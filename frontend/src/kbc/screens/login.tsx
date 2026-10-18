@@ -46,7 +46,7 @@ export function LoginScreen() {
   ]
 
   return (
-    <div className="absolute inset-0 flex flex-col overflow-hidden bg-[#33ace2]">
+    <div className="absolute inset-0 flex flex-col overflow-hidden bg-kbc-cyan">
       {/* Campaign artwork stand-in: dusk sky fading into KBC cyan. */}
       <div
         aria-hidden

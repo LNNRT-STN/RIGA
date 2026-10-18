@@ -27,7 +27,7 @@ export function InvestScreen() {
   return (
     <TabPage title="Invest" katePrompt="Invest your spare change?">
       <div className="px-4 pt-4">
-        <Card className="border border-[#c8def2] px-4 pt-4 pb-4 shadow-none">
+        <Card className="border border-kbc-kate-border px-4 pt-4 pb-4 shadow-none">
           <p className="text-[14.5px] text-kbc-muted">Total portfolio</p>
           <Amount value={total} className="text-[28px] font-extrabold text-kbc-navy" />
           <ul className="mt-4 divide-y divide-kbc-line">
@@ -38,7 +38,7 @@ export function InvestScreen() {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] text-kbc-navy">{inv.name}</span>
-                  <span className={cn('text-[13px] font-semibold', inv.change >= 0 ? 'text-kbc-green' : 'text-[#b42318]')}>
+                  <span className={cn('text-[13px] font-semibold', inv.change >= 0 ? 'text-kbc-green' : 'text-kbc-danger')}>
                     {inv.change >= 0 ? '▲' : '▼'} {Math.abs(inv.change).toFixed(1)}% this year
                   </span>
                 </span>
@@ -48,7 +48,7 @@ export function InvestScreen() {
           </ul>
           <button
             type="button"
-            className="mt-2 flex h-[40px] items-center gap-2 rounded-[6px] border border-[#c8def2] px-3 text-[14.5px] text-kbc-navy"
+            className="mt-2 flex h-[40px] items-center gap-2 rounded-[6px] border border-kbc-kate-border px-3 text-[14.5px] text-kbc-navy"
           >
             <Rows3 className="size-[18px]" strokeWidth={1.5} />
             Other view
