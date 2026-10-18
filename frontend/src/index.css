@@ -10,38 +10,38 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --background: #f3f8fa;
-  --foreground: #17324d;
+  --background: #f3fafe;
+  --foreground: #14294d;
   --card: #ffffff;
-  --card-foreground: #17324d;
+  --card-foreground: #14294d;
   --popover: #ffffff;
-  --popover-foreground: #17324d;
-  --primary: #006b99;
+  --popover-foreground: #14294d;
+  --primary: #3b8fd3;
   --primary-foreground: #ffffff;
-  --secondary: #eaf6fc;
-  --secondary-foreground: #003b71;
-  --muted: #eaf6fc;
-  --muted-foreground: #526779;
-  --accent: #eaf6fc;
-  --accent-foreground: #003b71;
+  --secondary: #eff7fc;
+  --secondary-foreground: #14294d;
+  --muted: #f3fafe;
+  --muted-foreground: #5b6b82;
+  --accent: #eff7fc;
+  --accent-foreground: #14294d;
   --destructive: #b42318;
-  --border: #d9e5ec;
-  --input: #6c8293;
-  --ring: #006b99;
-  --chart-1: #003b71;
-  --chart-2: #006b99;
-  --chart-3: #00aeef;
-  --chart-4: #167347;
-  --chart-5: #805800;
+  --border: #e1e9f0;
+  --input: #8195b1;
+  --ring: #2b75b6;
+  --chart-1: #14294d;
+  --chart-2: #3b8fd3;
+  --chart-3: #4dabe9;
+  --chart-4: #398371;
+  --chart-5: #e2c240;
   --radius: 0.75rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #17324d;
-  --sidebar-primary: #006b99;
+  --sidebar-foreground: #14294d;
+  --sidebar-primary: #3b8fd3;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eaf6fc;
-  --sidebar-accent-foreground: #003b71;
-  --sidebar-border: #d9e5ec;
-  --sidebar-ring: #006b99;
+  --sidebar-accent: #eff7fc;
+  --sidebar-accent-foreground: #14294d;
+  --sidebar-border: #e1e9f0;
+  --sidebar-ring: #2b75b6;
 }
 
 * {
@@ -54,22 +54,31 @@ body {
   margin: 0;
 }
 
-/* KBC Mobile replica palette, sampled from the reference screenshots in kbc-app-replicate/. */
 @theme {
-  --color-kbc-navy: #14294d;
-  --color-kbc-ink: #0f2347;
+  /* KBC Mobile replica palette. Keep in sync with section 2 of DESIGN.md. */
+  --color-kbc-cyan: #33ace2;
+  --color-kbc-sky: #4dabe9;
   --color-kbc-blue: #3b8fd3;
   --color-kbc-link: #2b75b6;
-  --color-kbc-sky: #4dabe9;
-  --color-kbc-cyan: #33ace2;
-  --color-kbc-pale: #f3fafe;
-  --color-kbc-mist: #e6eef5;
-  --color-kbc-line: #e1e9f0;
+  --color-kbc-navy: #14294d;
+  --color-kbc-ink: #0f2347;
   --color-kbc-muted: #5b6b82;
+  --color-kbc-placeholder: #76869c;
+  --color-kbc-pale: #f3fafe;
+  --color-kbc-surface-blue: #eff7fc;
+  --color-kbc-nav-selected: #e4e8ec;
+  --color-kbc-line: #e1e9f0;
+  --color-kbc-kate-border: #c8def2;
+  --color-kbc-control: #8195b1;
   --color-kbc-green: #398371;
+  --color-kbc-success-bg: #eaf6ee;
   --color-kbc-lime: #74bf4f;
   --color-kbc-yellow: #e2c240;
   --color-kbc-red: #e2493b;
+  --color-kbc-warning: #805800;
+  --color-kbc-warning-bg: #fff5da;
+  --color-kbc-danger: #b42318;
+  --color-kbc-danger-bg: #fff0ed;
   --font-kbc: "Nunito Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 }
 

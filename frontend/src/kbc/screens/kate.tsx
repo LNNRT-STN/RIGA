@@ -136,13 +136,13 @@ export function KateScreen({ prompt }: { prompt?: string }) {
           </span>
         </div>
         <form onSubmit={onSubmit} className="px-4">
-          <label className="flex h-[52px] items-center rounded-full border-[1.5px] border-[#c8def2] pr-[4px] pl-4 focus-within:border-kbc-blue">
+          <label className="flex h-[52px] items-center rounded-full border-[1.5px] border-kbc-kate-border pr-[4px] pl-4 focus-within:border-kbc-blue">
             <span className="sr-only">Type your question</span>
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Type your question here"
-              className="min-w-0 flex-1 bg-transparent text-[16px] text-kbc-navy outline-none placeholder:text-[#7586a0]"
+              className="min-w-0 flex-1 bg-transparent text-[16px] text-kbc-navy outline-none placeholder:text-kbc-placeholder"
             />
             <button
               type={draft.trim() ? 'submit' : 'button'}

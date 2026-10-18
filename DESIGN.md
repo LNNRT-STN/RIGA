@@ -4,7 +4,7 @@ Use the Impeccable skill for UI and UX work. Ask for product direction when a de
 
 > AI-ready design reference for a KBC-inspired banking prototype. Read this file before creating or changing any screen. Apply the same visual language to every page, component, and state.
 >
-> Status: independent interpretation of public KBC Mobile references, reviewed 30 September 2026. This is not KBC's official internal design system. Exact colours, type sizes, spacing, motion, and component dimensions below are proposed prototype tokens, not verified production specifications.
+> Status: independent interpretation of public KBC Mobile references, reviewed 30 September 2026. Colour tokens were updated on 18 October 2026 to match the app replica in `frontend/src/kbc/`, sampled from KBC Mobile screenshots. This is not KBC's official internal design system. Type sizes, spacing, motion, and component dimensions below are proposed prototype tokens, not verified production specifications.
 
 ## 1. Design direction
 
@@ -34,31 +34,38 @@ These observations come from the public app-store screenshots linked at the end.
 
 ## 2. Colour system
 
-Use these prototype tokens exactly. They are a consistent KBC-inspired palette, not an official brand specification.
+Use these tokens exactly. They were sampled from KBC Mobile screenshots and are implemented as `--color-kbc-*` in `frontend/src/index.css`, so the Tailwind colour column gives the class name, for example `bg-kbc-blue` or `text-kbc-link`; they are not an official brand specification.
 
-| Token | Value | Purpose |
-| --- | --- | --- |
-| `brand-cyan` | `#00AEEF` | Brand accent, decorative highlights, illustrations |
-| `action-blue` | `#006B99` | Primary buttons, links, selected controls |
-| `action-hover` | `#00567D` | Hover and pressed primary controls |
-| `navy` | `#003B71` | Headings, navigation, account amounts |
-| `text` | `#17324D` | Main body text |
-| `text-muted` | `#526779` | Secondary labels and descriptions |
-| `background` | `#F3F8FA` | App canvas |
-| `surface` | `#FFFFFF` | Cards, forms, navigation, sheets |
-| `surface-blue` | `#EAF6FC` | Selected chips and assistance panels |
-| `border` | `#D9E5EC` | Quiet dividers and card borders |
-| `control-border` | `#6C8293` | Input boundaries and unchecked controls |
-| `success` | `#167347` | Confirmed success and positive status |
-| `success-bg` | `#EAF6EE` | Success message background |
-| `warning` | `#805800` | Important caution |
-| `warning-bg` | `#FFF5DA` | Caution message background |
-| `danger` | `#B42318` | Errors, destructive actions, urgent problems |
-| `danger-bg` | `#FFF0ED` | Error message background |
+| Token | Tailwind colour | Value | Purpose | Contrast on white |
+| --- | --- | --- | --- | --- |
+| `brand-cyan` | `kbc-cyan` | `#33ACE2` | Login and campaign backgrounds, KBC wordmark tab | 2.6:1, decorative only |
+| `brand-sky` | `kbc-sky` | `#4DABE9` | Account card image bands, account and product icon tiles | 2.5:1, decorative only |
+| `action-blue` | `kbc-blue` | `#3B8FD3` | Primary pill buttons, floating transfer button, Kate action chips, outline icons, selected controls | 3.5:1 |
+| `action-text` | `kbc-link` | `#2B75B6` | Links, text actions, outline-button labels, pressed state of `action-blue`, focus ring | 4.9:1 |
+| `navy` | `kbc-navy` | `#14294D` | Headings, body text, account amounts, selected topic chip | 14.4:1 |
+| `ink` | `kbc-ink` | `#0F2347` | Bottom navigation icons and labels | 15.5:1 |
+| `text-muted` | `kbc-muted` | `#5B6B82` | Secondary labels, dates, metadata | 5.4:1 |
+| `placeholder` | `kbc-placeholder` | `#76869C` | Placeholder text in the Kate pill and inputs | 3.7:1 |
+| `background` | `kbc-pale` | `#F3FAFE` | App canvas, topic chips, transaction icon tiles | |
+| `surface` | `white` | `#FFFFFF` | Cards, forms, header, sheets | |
+| `surface-blue` | `kbc-surface-blue` | `#EFF7FC` | Promotional cards with a photo or illustration | |
+| `nav-selected` | `kbc-nav-selected` | `#E4E8EC` | Selected pill inside the bottom navigation | |
+| `border` | `kbc-line` | `#E1E9F0` | Quiet dividers and card borders | |
+| `kate-border` | `kbc-kate-border` | `#C8DEF2` | Kate search pill and chat input outline | |
+| `control-border` | `kbc-control` | `#8195B1` | Input boundaries and unchecked controls | 3.1:1 |
+| `success` | `kbc-green` | `#398371` | Income amounts, “New” badges, confirmed success | 4.5:1 |
+| `success-bg` | `kbc-success-bg` | `#EAF6EE` | Success message background | |
+| `accent-green` | `kbc-lime` | `#74BF4F` | “New” plus icons, sustainability illustrations | 2.3:1, decorative only |
+| `chart-expenses` | `kbc-yellow` | `#E2C240` | Expenses series and icon in the *In & out* chart; income uses `success` | 1.7:1, graphic only |
+| `notification` | `kbc-red` | `#E2493B` | Unread dot on the notification bell and *For you* cards | 4.0:1 |
+| `warning` | `kbc-warning` | `#805800` | Important caution, simulated-action notices | 6.3:1 |
+| `warning-bg` | `kbc-warning-bg` | `#FFF5DA` | Caution message background | |
+| `danger` | `kbc-danger` | `#B42318` | Errors, destructive actions, urgent problems | 6.5:1 |
+| `danger-bg` | `kbc-danger-bg` | `#FFF0ED` | Error message background | |
 
-Use darker `action-blue` for white-label buttons and readable links. Bright cyan is an accent, not the default colour for small text on white. Use `control-border` where users must perceive a control boundary; the quiet border is for nonessential separation. Validate contrast in the final rendered interface, including disabled and selected states.
+Use `action-text`, not `action-blue`, for any blue text on white or pale blue: links, “Show all”, outline-button labels, and the focus ring. White labels on `action-blue` reach only 3.5:1, below the 4.5:1 target in section 10. This matches the KBC Mobile app but passes only for large text (24px, or 18.66px bold) and for icons. Keep these labels at least 16px semibold, and use `action-text` as the fill wherever WCAG AA conformance is required. Cyan, sky and accent green are for surfaces and illustrations, never for text or the only boundary of a control. Use `control-border` where users must perceive a control boundary; the quiet border is for nonessential separation. Validate contrast in the final rendered interface, including disabled and selected states.
 
-Keep most of each screen white or pale blue. Reserve saturated blue for meaningful emphasis. Do not add purple, neon colours, black fintech panels, or decorative gradients. Financial debit amounts can stay navy with a minus sign; do not make every expense an alarming red.
+Keep most of each screen white or pale blue. Reserve saturated blue for meaningful emphasis. Gradients belong only to branded banners that the app itself uses, such as the login campaign and the Kate Wallet card; do not add them elsewhere. Do not add neon colours or black fintech panels, and use other hues only for partner or product marks. Financial debit amounts can stay navy with a minus sign; do not make every expense an alarming red.
 
 ## 3. Typography
 
@@ -134,9 +141,9 @@ This is a proposed responsive extension, not a reconstruction of KBC Touch.
 
 | Component | Appearance and behaviour |
 | --- | --- |
-| Primary button | `action-blue`, white text, 48px minimum height, 8px radius; clear verb label |
-| Secondary button | White surface, `action-blue` label and border; same size as primary |
-| Text action | `action-blue`; underline on hover/focus; comfortable hit area |
+| Primary button | `action-blue` fill, white semibold label (see the contrast note in section 2), 48px minimum height, 8px radius; clear verb label |
+| Secondary button | White surface, `action-blue` border, `action-text` label; same size as primary |
+| Text action | `action-text`; underline on hover/focus; comfortable hit area |
 | Icon button | 24px icon inside at least 44px hit area; accessible name |
 | Input | Visible label, white fill, `control-border`, 48px minimum height, 8px radius |
 | Topic chip | Pale blue pill with icon and label; dark blue selected state if needed |
@@ -153,7 +160,7 @@ Use one consistent outline icon family, usually 20–24px with approximately 1.5
 ### Interaction states
 
 - Every interactive component needs default, focus, pressed, disabled, and relevant loading/error states. Add hover for pointer devices.
-- Focus ring: 2px `action-blue` outline with 2px offset, visible on every surface.
+- Focus ring: 2px `action-text` outline with 2px offset, visible on every surface.
 - Loading: maintain layout, use a short label such as “Loading”, and prevent duplicate submissions.
 - Input errors: keep the user's values, identify the field, and explain how to fix it directly below the input.
 - Empty state: explain why the list is empty and show one useful action.

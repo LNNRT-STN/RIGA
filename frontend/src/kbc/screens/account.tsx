@@ -86,7 +86,7 @@ export function AccountScreen({ accountId }: { accountId: string }) {
   return (
     <div className="absolute inset-0 z-50 flex animate-in flex-col bg-white duration-300 ease-out slide-in-from-right motion-reduce:animate-none">
       <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[120px]">
-        <header className="relative overflow-hidden bg-[#3b8fd3] pt-(--safe-top) text-white">
+        <header className="relative overflow-hidden bg-kbc-blue pt-(--safe-top) text-white">
           <div
             aria-hidden
             className="absolute inset-0 bg-[linear-gradient(115deg,rgba(18,70,130,0.25)_0%,rgba(18,70,130,0.25)_32%,transparent_32%),linear-gradient(240deg,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0.08)_40%,transparent_40%)]"
@@ -123,13 +123,13 @@ export function AccountScreen({ accountId }: { accountId: string }) {
         </header>
 
         <div className="px-4 pt-4">
-          <label className="flex h-[46px] items-center rounded-[8px] border-[1.5px] border-[#8195b1] px-4 focus-within:border-kbc-blue">
+          <label className="flex h-[46px] items-center rounded-[8px] border-[1.5px] border-kbc-control px-4 focus-within:border-kbc-blue">
             <span className="sr-only">Search for a payment</span>
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search for a payment"
-              className="min-w-0 flex-1 bg-transparent text-[16px] text-kbc-navy outline-none placeholder:text-[#7586a0]"
+              className="min-w-0 flex-1 bg-transparent text-[16px] text-kbc-navy outline-none placeholder:text-kbc-placeholder"
             />
             <Search className="size-[22px] text-kbc-blue" strokeWidth={1.6} />
           </label>
