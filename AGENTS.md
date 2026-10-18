@@ -6,6 +6,6 @@ Before changing files, read [the collaboration skill](.agents/skills/hackathon-c
 
 For product work, use `DESIGN.md` as the UI direction and `KBC_information.md` as background context. Check the relevant sections rather than loading the entire background document for every task. Use the repo's `impeccable` skill for UI and UX work; it is pinned as a submodule and linked at `.agents/skills/impeccable`.
 
-Use English for all new UI copy, code comments, documentation, PR descriptions, and team communication. The default demo locale is English (Belgium). Do not reuse non-English copy from historical reference material in the product UI.
+Use English for all new UI copy, code comments, documentation, PR descriptions, and team communication. The default demo locale is English (Belgium).
 
 The frontend uses React, Vite, Tailwind CSS, and shadcn/ui. Reuse components from `frontend/src/components/ui` where appropriate, and keep their tokens aligned with `DESIGN.md`.
