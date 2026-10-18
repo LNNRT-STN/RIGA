@@ -1,6 +1,6 @@
 # KBC Mobile — DESIGN.md
 
-Use the impeccable skill for UI and UX ask me questions on how I want it.
+Use the Impeccable skill for UI and UX work. Ask for product direction when a design choice cannot be inferred from this guide.
 
 > AI-ready design reference for a KBC-inspired banking prototype. Read this file before creating or changing any screen. Apply the same visual language to every page, component, and state.
 >
@@ -16,10 +16,10 @@ The interface serves everyday banking, investments, insurance, and practical mon
 
 - Light app screens with blue text and cyan outline icons.
 - A profile avatar, Kate search/help entry, and notification icon at the top of the home screen.
-- Horizontal account cards, recent transactions, and a “Voor jou” section.
+- Horizontal account cards, recent transactions, and a “For you” section.
 - Small topic chips such as MyNWS, MyHome, and MyMobility.
-- “Mijn KBC” groups products into investments, loans, and insurance using compact white cards.
-- Four bottom navigation destinations: Start, Mijn KBC, Beleggen, Aanbod.
+- “My KBC” groups products into investments, loans, and insurance using compact white cards.
+- Four bottom navigation destinations: Home, My KBC, Invest, Offers.
 
 These observations come from the public app-store screenshots linked at the end. Promotional backgrounds surrounding phone screenshots are marketing artwork; do not copy their gradients into the banking interface.
 
@@ -82,7 +82,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-
 - Use sentence case and natural spacing. Avoid all-caps headings.
 - Use tabular numerals for balances, transaction amounts, and financial comparisons.
 - Keep amounts on one line where possible; allow surrounding labels to wrap.
-- Use a Dutch Belgian locale for default demo content: `€ 2.450,00`, `30 sep 2026`, `14:30`.
+- Use English (Belgium) for default demo content: `€2,450.00`, `30 Sep 2026`, `14:30`.
 - Never truncate a payment amount, recipient name on a review screen, or important fee.
 - Support larger system text. Fixed heights below are minimums, not clipping limits.
 
@@ -113,9 +113,9 @@ Prefer a quiet border or subtle shadow. Avoid heavy drop shadows, floating glass
 - Design for 390px width and verify at 320px, 390px, and 430px.
 - Use a single vertical content column with natural scrolling.
 - Home header: 32px avatar, flexible Kate search/help pill, then a notification control. Make their interactive hit areas at least 44px.
-- Kate pill copy: “Hoe kan ik je helpen?” Use a small assistant symbol or supplied Kate asset.
+- Kate pill copy: “How can I help?” Use a small assistant symbol or supplied Kate asset.
 - Account cards may scroll horizontally. Leave part of the next card visible and provide an accessible way to navigate the list.
-- Keep Start, Mijn KBC, Beleggen, and Aanbod in a stable bottom bar. Use a 24px icon plus a short label, a minimum 56px bar, and bottom safe-area padding.
+- Keep Home, My KBC, Invest, and Offers in a stable bottom bar. Use a 24px icon plus a short label, a minimum 56px bar, and bottom safe-area padding.
 - Show the selected destination with navy text and a filled icon or clear indicator; use muted icons for inactive destinations.
 - On detail screens use a back control, clear title, and relevant actions. Avoid repeating the entire home header.
 - Add enough bottom padding that content and primary actions remain visible above fixed navigation and the keyboard.
@@ -154,41 +154,44 @@ Use one consistent outline icon family, usually 20–24px with approximately 1.5
 
 - Every interactive component needs default, focus, pressed, disabled, and relevant loading/error states. Add hover for pointer devices.
 - Focus ring: 2px `action-blue` outline with 2px offset, visible on every surface.
-- Loading: maintain layout, use a short label such as “Bezig met laden”, and prevent duplicate submissions.
+- Loading: maintain layout, use a short label such as “Loading”, and prevent duplicate submissions.
 - Input errors: keep the user's values, identify the field, and explain how to fix it directly below the input.
 - Empty state: explain why the list is empty and show one useful action.
 - Success: state what happened and provide the result or reference; do not rely on a disappearing toast for important outcomes.
 - Stale/offline data: show the last update time and distinguish cached balances from current information.
-- Unknown payment outcome: show “Status wordt gecontroleerd”; do not invite a second payment until the outcome is resolved.
+- Unknown payment outcome: show “Checking payment status”; do not invite a second payment until the outcome is resolved.
 
 ## 7. Kate and proactive assistance
 
 The following rules are proposed UX constraints for an AI-enabled prototype. They do not describe KBC's current recommendation policies or establish legal compliance.
 
-Integrate assistance into the familiar “Voor jou” area and Kate entry point. Do not turn the home screen into a chat window or create a fifth navigation tab by default.
+Integrate assistance into the familiar “For you” area and Kate entry point. Do not turn the home screen into a chat window or create a fifth navigation tab by default.
 
 ### Recommendation card anatomy
 
 1. Small icon and a clear label, such as “Kate tip”.
 2. One specific, useful observation.
 3. One sentence explaining the evidence or estimated benefit.
-4. One primary action; optional “Later” or “Niet relevant”.
-5. A discreet but accessible “Waarom zie ik dit?” explanation.
+4. One primary action; optional “Later” or “Not relevant”.
+5. A discreet but accessible “Why am I seeing this?” explanation.
 
 **Example demo card**
 
-> **Hou voldoende saldo voor je huur**  
-> Je huur van € 750,00 wordt morgen betaald. Je zichtrekening heeft momenteel € 620,00.  
-> **Bekijk opties** · Later  
-> Waarom zie ik dit?
+> **Keep enough money for your rent**
+>
+> Your €750.00 rent payment is due tomorrow. Your current account has €620.00.
+>
+> **View options** · Later
+>
+> Why am I seeing this?
 
-Use that copy only when demo data supports it. Opening “Bekijk opties” must explain available choices; it must not silently transfer money.
+Use that copy only when demo data supports it. Opening “View options” must explain available choices; it must not silently transfer money.
 
 ### Keep personalisation quiet and controllable
 
 - Show at most one proactive recommendation on the initial home view in the prototype. Ordinary account information remains visible.
 - Prioritise a meaningful customer benefit and a timely, actionable need. With weak evidence, ask one useful question or show nothing.
-- A dismissal removes the card. “Niet relevant” suppresses the same recommendation unless the situation materially changes.
+- A dismissal removes the card. “Not relevant” suppresses the same recommendation unless the situation materially changes.
 - Present optional notification preferences where appropriate. Do not repeatedly ask after refusal.
 - Label sponsored/commercial recommendations and explain relevant fees or conditions before commitment.
 - Let users inspect the reason, relevant data, and settings without reading technical model details.
@@ -200,7 +203,7 @@ Use that copy only when demo data supports it. Opening “Bekijk opties” must 
 - Use compact answers, structured facts, and relevant action cards. Avoid long chat essays.
 - Distinguish facts, estimates, suggestions, and completed actions through clear wording.
 - Before a money movement, show amount, source, recipient/destination, date, and known fees in a review step.
-- Use “Bevestig overschrijving” instead of a vague “OK”. Provide an equally discoverable cancellation path.
+- Use “Confirm transfer” instead of a vague “OK”. Provide an equally discoverable cancellation path.
 - For a demo, label actions as simulated and use synthetic customer data.
 - Show action states accurately: proposed, awaiting confirmation, processing, completed, or failed.
 - Offer human assistance when the user asks or when the task cannot be resolved reliably.
@@ -208,15 +211,15 @@ Use that copy only when demo data supports it. Opening “Bekijk opties” must 
 
 ## 8. Screen recipes
 
-### Start
+### Home
 
-Header with avatar, Kate entry, and notifications → compact topic chips → account card carousel → recent transactions → “Voor jou” with one useful recommendation → fixed bottom navigation.
+Header with avatar, Kate entry, and notifications → compact topic chips → account card carousel → recent transactions → “For you” with one useful recommendation → fixed bottom navigation.
 
 Keep balances and everyday banking information in the first view. Put any contextual account action next to the account it affects. Include a discreet balance-visibility toggle when relevant.
 
-### Mijn KBC
+### My KBC
 
-Page title → grouped sections for existing products → compact cards/rows with icons and relevant amounts → a small “Nieuw” action per category when needed. Keep investments, loans, and insurance easy to scan.
+Page title → grouped sections for existing products → compact cards/rows with icons and relevant amounts → a small “New” action per category when needed. Keep investments, loans, and insurance easy to scan.
 
 ### Insight detail
 
@@ -232,8 +235,8 @@ Readable section headings → plain-language explanations → individually label
 
 ## 9. Writing, charts, and motion
 
-- Default demo UI language: Dutch (Belgium). Keep the entire screen in one language and support localisation to French or English.
-- Use direct, friendly language: “Bekijk je uitgaven”, “Pas je limiet aan”, “Probeer opnieuw”.
+- Default UI and demo language: English (Belgium). Keep every screen, example, and new project document in English. Localisation can be added later if requested.
+- Use direct, friendly language: “View your spending”, “Change your limit”, “Try again”.
 - Prefer concrete benefits over AI claims. Do not describe internal agents, token budgets, APIs, or model routing in customer flows.
 - Use sample data consistently across screens. Never invent a real customer fact to fill a card.
 - Chart styling: white/pale blue background, navy labels, blue data series, light gridlines, readable currency/period labels. Include a text summary or accessible data view.
