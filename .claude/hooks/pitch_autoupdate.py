@@ -123,7 +123,7 @@ def main():
     if facts_is_template and code_file:
         tasks.append(
             f"{FACTS_FILE} has never been generated. Run a full 'update pitch facts' from the repository "
-            "(CLAUDE.md > Rules for pitch_facts.md)."
+            "(Presentation_workflow/PITCH_RULES.md > Rules for pitch_facts.md)."
         )
     elif code_m > facts_m + 1 and (time.time() - facts_m) > FACTS_MIN_INTERVAL_MIN * 60:
         tasks.append(
@@ -136,7 +136,7 @@ def main():
         return 0
 
     reason = (
-        "Before finishing, keep the pitch files in sync (CLAUDE.md > Automatic updates). "
+        "Before finishing, keep the pitch files in sync (Presentation_workflow/PITCH_RULES.md > Automatic updates). "
         + " ".join(tasks)
         + " Then finish with one line saying what you updated in the pitch files."
     )
