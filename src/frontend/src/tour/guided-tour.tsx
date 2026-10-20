@@ -33,8 +33,11 @@ export function GuidedTour({ index, onIndex, onClose, context, onCardHeight }: P
     const card = cardRef.current
     if (!card) return
     const report = () => {
-      const floating = getComputedStyle(card).position === 'fixed'
-      reportHeight.current(floating ? Math.ceil(card.getBoundingClientRect().height) + 12 : 0)
+      const style = getComputedStyle(card)
+      const floating = style.position === 'fixed'
+      // On phones the sheet is docked to the bottom edge, so the app ends exactly where it starts.
+      const gap = style.bottom === '0px' ? 0 : 12
+      reportHeight.current(floating ? Math.ceil(card.getBoundingClientRect().height) + gap : 0)
     }
     const observer = new ResizeObserver(report)
     observer.observe(card)
@@ -87,25 +90,42 @@ export function GuidedTour({ index, onIndex, onClose, context, onCardHeight }: P
       ref={cardRef}
       aria-label="Guided tour"
       className={cn(
-        'kbc z-[100] flex flex-col bg-white text-kbc-navy shadow-[0_12px_32px_rgba(0,59,113,0.14)]',
-        // Small screens: a card over the bottom of the screen. Large screens: a column next to the phone.
-        'fixed inset-x-3 bottom-3 mx-auto min-h-[204px] max-w-[480px] rounded-[16px] p-4 sm:inset-x-4 sm:bottom-4 sm:min-h-[220px] sm:p-5',
+        'kbc z-[100] flex flex-col bg-white text-kbc-navy',
+        // Phones: a compact sheet docked to the bottom edge, so the app keeps as much room as possible.
+        'fixed inset-x-0 bottom-0 rounded-t-[20px] px-4 pt-2 pb-[max(12px,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,59,113,0.12)]',
+        // Tablets: a card over the bottom of the screen. Large screens: a column next to the phone.
+        'sm:inset-x-4 sm:bottom-4 sm:mx-auto sm:min-h-[220px] sm:max-w-[480px] sm:rounded-[16px] sm:p-5 sm:shadow-[0_12px_32px_rgba(0,59,113,0.14)]',
         'lg:static lg:mx-0 lg:min-h-[400px] lg:w-[320px] xl:w-[360px] lg:max-w-none lg:shrink-0 lg:self-center lg:rounded-[20px] lg:p-7',
       )}
     >
-      <div className="flex items-center justify-between gap-3">
-        <p className="flex items-baseline gap-[6px] text-[14px] font-bold text-kbc-muted">
+      <div className="flex min-h-[44px] items-center justify-between gap-3">
+        <p
+          className={cn(
+            'flex items-baseline gap-[6px] text-[14px] font-bold text-kbc-muted',
+            storyIndex >= 0 && 'max-sm:hidden',
+          )}
+        >
           <KbcWordmark className="text-[15px] text-kbc-navy" />
           Trust tour
         </p>
+        {/* Phones: the progress takes the label's place, so the sheet needs one row less. */}
+        {storyIndex >= 0 && (
+          <div className="flex min-w-0 flex-1 items-center gap-3 sm:hidden">
+            <Progress current={storyIndex} className="mt-0 flex-1" />
+            <span className="shrink-0 text-[13px] text-kbc-muted tabular-nums">
+              {storyIndex + 1} of {storySteps.length}
+            </span>
+          </div>
+        )}
         {!isLast && (
           <button
             type="button"
             onClick={onClose}
-            className="-mr-2 flex min-h-[44px] items-center gap-1 rounded-full px-3 text-[14px] font-semibold text-kbc-link transition-colors duration-150 hover:bg-kbc-pale"
+            aria-label={isFirst ? 'Skip the tour' : 'Exit tour'}
+            className="-mr-2 flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1 rounded-full px-3 text-[14px] font-semibold text-kbc-link transition-colors duration-150 hover:bg-kbc-pale max-sm:px-2"
           >
-            {isFirst ? 'Skip' : 'Exit tour'}
-            <X className="size-[16px]" strokeWidth={2} />
+            <span className={cn(!isFirst && 'max-sm:sr-only')}>{isFirst ? 'Skip' : 'Exit tour'}</span>
+            <X className="size-[16px] max-sm:size-[18px]" strokeWidth={2} />
           </button>
         )}
       </div>
@@ -113,35 +133,35 @@ export function GuidedTour({ index, onIndex, onClose, context, onCardHeight }: P
       <div
         key={step.id}
         aria-live="polite"
-        className="mt-2 animate-in duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] fade-in slide-in-from-bottom-2 motion-reduce:animate-none lg:mt-4"
+        className="animate-in duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] fade-in slide-in-from-bottom-2 motion-reduce:animate-none sm:mt-2 lg:mt-4"
       >
         <h2
           className={cn(
             'font-extrabold tracking-[-0.015em] text-balance',
-            isFirst || isLast ? 'text-[26px] leading-[1.15] sm:text-[30px] lg:text-[38px]' : 'text-[20px] leading-[1.2] sm:text-[22px] lg:text-[26px]',
+            isFirst || isLast ? 'text-[24px] leading-[1.15] sm:text-[30px] lg:text-[38px]' : 'text-[18px] leading-[1.25] sm:text-[22px] lg:text-[26px]',
           )}
         >
           {step.title}
         </h2>
-        <p className="mt-2 text-[15px] leading-[1.5] text-pretty sm:text-[16px] lg:mt-3 lg:text-[16.5px]">{step.body}</p>
+        <p className="mt-1 text-[15px] leading-[1.45] text-pretty sm:mt-2 sm:text-[16px] sm:leading-[1.5] lg:mt-3 lg:text-[16.5px]">{step.body}</p>
         {isFirst && (
-          <p className="mt-3 text-[14px] text-kbc-muted lg:mt-4">
+          <p className="mt-2 text-[14px] text-kbc-muted sm:mt-3 lg:mt-4">
             Press Next to review the demo.
           </p>
         )}
-        {isLast && <p className="mt-3 text-[13px] leading-[1.4] text-kbc-muted">All people, companies and amounts are fictional. Transfers and call analysis are simulated.</p>}
+        {isLast && <p className="mt-2 text-[13px] sm:mt-3 leading-[1.4] text-kbc-muted">All people, companies and amounts are fictional. Transfers and call analysis are simulated.</p>}
       </div>
 
       {/* Controls sit at the bottom of a fixed-height card, so Next stays under the pointer on every step. */}
       {isFirst ? (
-        <div className="mt-auto flex flex-col gap-2 pt-4 lg:pt-7">
+        <div className="mt-auto flex flex-col gap-2 pt-3 sm:pt-4 lg:pt-7">
           <PrimaryButton onClick={next} ariaKeyshortcuts="ArrowRight">
             Next
             <ArrowRight className="size-[18px]" strokeWidth={2} />
           </PrimaryButton>
         </div>
       ) : isLast ? (
-        <div className="mt-auto flex flex-col gap-2 pt-4 lg:pt-7">
+        <div className="mt-auto flex flex-col gap-1 pt-3 sm:gap-2 sm:pt-4 lg:pt-7">
           <PrimaryButton onClick={onClose}>Explore on my own</PrimaryButton>
           <button
             type="button"
@@ -152,17 +172,17 @@ export function GuidedTour({ index, onIndex, onClose, context, onCardHeight }: P
           </button>
         </div>
       ) : (
-        <div className="mt-auto pt-4 lg:pt-7">
-          <p className="text-right text-[13px] leading-[1.3] text-kbc-muted tabular-nums">
+        <div className="mt-auto pt-3 sm:pt-4 lg:pt-7">
+          <p className="text-right text-[13px] leading-[1.3] text-kbc-muted tabular-nums max-sm:hidden">
             {storyIndex + 1} of {storySteps.length}
           </p>
-          <Progress current={storyIndex} />
-          <div className="mt-3 flex items-center gap-3 lg:mt-4">
+          <Progress current={storyIndex} className="max-sm:hidden" />
+          <div className="flex items-center gap-3 sm:mt-3 lg:mt-4">
             <button
               type="button"
               onClick={back}
               aria-label="Previous step"
-              className="grid size-[48px] shrink-0 place-items-center rounded-full border-[1.5px] border-kbc-blue text-kbc-link transition-colors duration-150 hover:bg-kbc-pale"
+              className="grid size-[44px] shrink-0 place-items-center rounded-full border-[1.5px] sm:size-[48px] border-kbc-blue text-kbc-link transition-colors duration-150 hover:bg-kbc-pale"
             >
               <ArrowLeft className="size-[20px]" strokeWidth={1.8} />
             </button>
@@ -178,9 +198,9 @@ export function GuidedTour({ index, onIndex, onClose, context, onCardHeight }: P
 }
 
 /** One segment per step, with a wider gap between chapters, so the visitor sees how much is left. */
-function Progress({ current }: { current: number }) {
+function Progress({ current, className }: { current: number; className?: string }) {
   return (
-    <div aria-hidden className="mt-2 flex gap-2">
+    <div aria-hidden className={cn('mt-2 flex gap-2', className)}>
       {chapters.map((chapter) => (
         <div key={chapter} className="flex flex-1 gap-[3px]">
           {storySteps.map((s, i) =>
@@ -217,7 +237,7 @@ function PrimaryButton({
       onClick={onClick}
       aria-keyshortcuts={ariaKeyshortcuts}
       className={cn(
-        'flex h-[48px] w-full shrink-0 items-center justify-center gap-2 rounded-full bg-kbc-blue text-[16px] font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-kbc-link active:scale-[0.98]',
+        'flex h-[44px] w-full shrink-0 sm:h-[48px] items-center justify-center gap-2 rounded-full bg-kbc-blue text-[16px] font-semibold text-white transition-[background-color,transform] duration-150 hover:bg-kbc-link active:scale-[0.98]',
         className,
       )}
     >
