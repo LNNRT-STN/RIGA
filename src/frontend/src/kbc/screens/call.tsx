@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { LoaderCircle, Phone, PhoneOff, ShieldX } from 'lucide-react'
+import { LoaderCircle, Phone, PhoneOff, ShieldOff, ShieldX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { business } from '../data'
 import { useApp } from '../store'
 import { checkCall, reportScam, type TrustResult } from '../trust/api'
 import { SecondaryAction, TrustVerdict, VerifiedContactButton } from '../trust/components'
+import { dataUse } from '../trust/controls'
 
 type Stage = 'ringing' | 'live' | 'ended'
 
@@ -15,7 +16,8 @@ const request = 'Laura, I need you to pay â‚¬48,500.00 to our notary today. Itâ€
 
 /** A deepfake CEO video call, with KBC Trust checking the caller before and during the call. */
 export function IncomingCall() {
-  const { setIncomingCall, showToast } = useApp()
+  const { setIncomingCall, showToast, trustControls, setTrustControls, logActivity } = useApp()
+  const callsOn = trustControls.data.calls
   const [stage, setStage] = useState<Stage>('ringing')
   const [trust, setTrust] = useState<TrustResult | null>(null)
   const [failed, setFailed] = useState(false)
@@ -23,15 +25,27 @@ export function IncomingCall() {
   const [showVerdict, setShowVerdict] = useState(false)
   const [reported, setReported] = useState(false)
 
+  // The caller is only analysed when the customer allows KBC Trust to use call signals.
   useEffect(() => {
+    if (!callsOn) return
     let current = true
     checkCall('ceo-deepfake')
-      .then((result) => current && setTrust(result))
+      .then((result) => {
+        if (!current) return
+        setTrust(result)
+        const { used, kept } = dataUse('call')
+        logActivity(`Checked a video call from ${callerNumber}`, `Used ${used}. ${kept} Result: ${result.headline}`)
+      })
       .catch(() => current && setFailed(true))
     return () => {
       current = false
     }
-  }, [])
+  }, [callsOn, logActivity])
+
+  const turnOnChecks = () => {
+    setTrustControls((prev) => ({ ...prev, data: { ...prev.data, calls: true } }))
+    logActivity('You switched on calls', 'KBC Trust may use your calls again.')
+  }
 
   useEffect(() => {
     if (stage !== 'live') return
@@ -54,6 +68,7 @@ export function IncomingCall() {
       const { message } = await reportScam({ number: callerNumber })
       setReported(true)
       showToast(message)
+      logActivity('You reported a phone number as a scam', `Only ${callerNumber} was shared with other KBC customers, never your name.`)
     } catch {
       showToast('Reporting is not available right now. Please try again.')
     }
@@ -92,7 +107,9 @@ export function IncomingCall() {
       {/* KBC Trust banner, shown like a system notification on top of the call. */}
       <div className="relative z-10 px-3 pt-[calc(var(--safe-top)+8px)]">
         <div className="flex items-center gap-3 rounded-[16px] bg-white px-3 py-[10px] text-kbc-navy shadow-[0_12px_32px_rgba(0,0,0,0.25)]">
-          {trust ? (
+          {!callsOn ? (
+            <ShieldOff className="size-[24px] shrink-0 text-kbc-muted" strokeWidth={1.8} />
+          ) : trust ? (
             <ShieldX className="size-[26px] shrink-0 text-kbc-danger" strokeWidth={1.8} />
           ) : (
             <LoaderCircle className="size-[24px] shrink-0 animate-spin text-kbc-blue" strokeWidth={2} />
@@ -100,9 +117,25 @@ export function IncomingCall() {
           <p className="min-w-0 flex-1 text-[14px] leading-[1.3]">
             <span className="block text-[12px] font-bold text-kbc-muted">KBC Trust</span>
             <span className="block font-bold">
-              {trust ? trust.headline : failed ? 'Could not check this caller' : 'Checking this caller'}
+              {!callsOn
+                ? 'Caller checks are off'
+                : trust
+                  ? trust.headline
+                  : failed
+                    ? 'Could not check this caller'
+                    : 'Checking this caller'}
             </span>
+            {!callsOn && <span className="block text-[12.5px] text-kbc-muted">You chose not to share call signals</span>}
           </p>
+          {!callsOn && (
+            <button
+              type="button"
+              onClick={turnOnChecks}
+              className="h-[36px] shrink-0 rounded-full border-[1.5px] border-kbc-blue px-3 text-[14px] font-semibold text-kbc-link"
+            >
+              Check now
+            </button>
+          )}
           {trust && (
             <span className="shrink-0 rounded-full bg-kbc-danger-bg px-[10px] py-[3px] text-[14px] font-extrabold text-kbc-danger tabular-nums">
               {trust.score}

@@ -1,16 +1,16 @@
-import { useState } from 'react'
-import { FileText, Globe, HeartHandshake, PhoneIncoming, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { Building2, ChevronRight, FileText, Globe, HeartHandshake, PhoneIncoming, ShieldCheck, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { guardianAngel, invoicesToPay } from '../data'
 import { PushedPage } from '../layout'
 import { useApp } from '../store'
+import { dataTypes, partnerForSupplier, partners, proactivityLabel, proactivityOptions } from '../trust/controls'
 import { Amount, ListRow } from '../ui'
 
-/** KBC Trust home: the three "is this real?" checks, then the controls the customer keeps. */
+/** KBC Trust home: the three "is this real?" checks, then the choices the customer keeps. */
 export function TrustScreen() {
-  const { push, setIncomingCall } = useApp()
-  const [sharing, setSharing] = useState({ documents: true, calls: true, payments: true })
-  const toggle = (key: keyof typeof sharing) => setSharing((prev) => ({ ...prev, [key]: !prev[key] }))
+  const { push, setIncomingCall, trustControls: controls } = useApp()
+  const manage = () => push({ name: 'trust-data' })
+  const partnersOn = partners.filter((p) => controls.partners[p.id]).length
 
   return (
     <PushedPage title="KBC Trust" className="bg-kbc-pale pb-12">
@@ -30,23 +30,46 @@ export function TrustScreen() {
       <div className="bg-white">
         <ListRow
           icon={ShieldCheck}
-          label="Check every new beneficiary"
-          detail="Risky payments are stopped before they leave"
-          trailing={<span className="text-[14px] font-bold text-kbc-green">On</span>}
+          label={proactivityLabel(controls.proactivity)}
+          detail={proactivityOptions.find((o) => o.value === controls.proactivity)?.detail}
+          onClick={manage}
         />
         <ListRow
           icon={HeartHandshake}
           label={`Guardian Angel: ${guardianAngel.name}`}
-          detail={`We inform ${guardianAngel.relation} when we stop a payment`}
+          detail={controls.guardianAngel ? `We inform ${guardianAngel.relation} when we stop a payment` : 'Off: nobody else is told'}
+          onClick={manage}
         />
       </div>
 
       <h2 className="px-4 pt-7 pb-1 text-[19px] font-extrabold text-kbc-navy">What you share</h2>
       <p className="px-4 pb-3 text-[14px] leading-[1.4] text-kbc-muted">You choose what KBC Trust may use. Change it at any time.</p>
       <div className="bg-white">
-        <ToggleRow label="Documents you upload" detail="Read once to check them, then deleted" on={sharing.documents} onToggle={() => toggle('documents')} />
-        <ToggleRow label="Incoming calls" detail="Caller number, voice and video signals" on={sharing.calls} onToggle={() => toggle('calls')} />
-        <ToggleRow label="Payment history" detail="To spot a changed account number" on={sharing.payments} onToggle={() => toggle('payments')} />
+        {dataTypes.map((type) => (
+          <ListRow
+            key={type.key}
+            icon={type.icon}
+            label={type.label}
+            detail={type.kept}
+            onClick={manage}
+            trailing={<OnOff on={controls.data[type.key]} />}
+          />
+        ))}
+        <ListRow
+          icon={Building2}
+          label="Verified partners"
+          detail={`${partnersOn} of ${partners.length} may send you invoices`}
+          onClick={manage}
+        />
+      </div>
+      <div className="px-4 pt-4">
+        <button
+          type="button"
+          onClick={manage}
+          className="h-[48px] w-full rounded-full border-[1.5px] border-kbc-blue bg-white text-[16px] font-semibold text-kbc-link transition-transform duration-150 active:scale-[0.98]"
+        >
+          Manage what you share
+        </button>
       </div>
     </PushedPage>
   )
@@ -65,41 +88,33 @@ function CheckTile({ icon: Icon, label, onClick }: { icon: LucideIcon; label: st
   )
 }
 
-function ToggleRow({ label, detail, on, onToggle }: { label: string; detail: string; on: boolean; onToggle: () => void }) {
+/** On or off in words and colour, so the state never depends on colour alone. */
+function OnOff({ on }: { on: boolean }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on}
-      onClick={onToggle}
-      className="flex min-h-[60px] w-full items-center gap-4 px-4 py-2 text-left transition-colors duration-150 active:bg-kbc-pale"
-    >
-      <span className="min-w-0 flex-1">
-        <span className="block text-[16px] text-kbc-navy">{label}</span>
-        <span className="block text-[13px] text-kbc-muted">{detail}</span>
-      </span>
-      <span className={cn('relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors duration-200', on ? 'bg-kbc-blue' : 'bg-[#d5dbe2]')}>
-        <span
-          className={cn(
-            'absolute top-[2px] left-[2px] size-[27px] rounded-full bg-white shadow transition-transform duration-200',
-            on && 'translate-x-[20px]',
-          )}
-        />
-      </span>
-    </button>
+    <span className={cn('flex shrink-0 items-center gap-1 text-[14px] font-bold', on ? 'text-kbc-green' : 'text-kbc-muted')}>
+      {on ? 'On' : 'Off'}
+      <ChevronRight className="size-5 text-kbc-navy" strokeWidth={1.5} />
+    </span>
   )
 }
 
 /** Invoices waiting to be paid, from Zoomit and forwarded emails. Opens a prefilled transfer. */
 export function InvoicesScreen() {
-  const { push, accounts } = useApp()
+  const { push, accounts, trustControls } = useApp()
+  // Invoices a verified partner delivers itself (Zoomit) stop arriving when the customer switches it off.
+  // Invoices that came by email stay: the customer brought those in.
+  const blocked = invoicesToPay.filter((i) => {
+    const partner = partnerForSupplier(i.supplier)
+    return i.source === 'Zoomit' && partner !== undefined && !trustControls.partners[partner.id]
+  })
+  const shown = invoicesToPay.filter((i) => !blocked.includes(i))
   return (
     <PushedPage title="Pay an invoice" className="pb-12">
       <p className="px-4 pt-2 pb-3 text-[15px] leading-[1.45] text-kbc-muted">
         KBC Trust checks every invoice before you pay it.
       </p>
       <ul className="divide-y divide-kbc-line border-y border-kbc-line">
-        {invoicesToPay.map((invoice) => {
+        {shown.map((invoice) => {
           const account = accounts.find((a) => a.id === invoice.accountId)
           return (
             <li key={invoice.id}>
@@ -135,6 +150,15 @@ export function InvoicesScreen() {
           )
         })}
       </ul>
+      {blocked.length > 0 && (
+        <p className="px-4 pt-4 text-[14px] leading-[1.45] text-kbc-muted">
+          {blocked.map((i) => partnerForSupplier(i.supplier)?.name).join(' and ')} can’t send you invoices, because you switched{' '}
+          {blocked.length > 1 ? 'them' : 'it'} off.{' '}
+          <button type="button" onClick={() => push({ name: 'trust-data' })} className="font-semibold text-kbc-link underline underline-offset-2">
+            Change what you share
+          </button>
+        </p>
+      )}
     </PushedPage>
   )
 }

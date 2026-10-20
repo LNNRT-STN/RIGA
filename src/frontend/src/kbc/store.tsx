@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import { initialAccounts, initialTransactions, type Account, type Transaction } from './data'
+import { defaultTrustControls, initialActivity, timeNow, type ActivityEntry, type TrustControls } from './trust/controls'
 
 export type Tab = 'home' | 'mykbc' | 'invest' | 'offers'
 
@@ -10,6 +11,7 @@ export type Route =
   | { name: 'messages' }
   | { name: 'transfer'; beneficiaryId?: string; prefill?: TransferPrefill }
   | { name: 'trust' }
+  | { name: 'trust-data' }
   | { name: 'invoices' }
 
 /** Values a flow can hand to the transfer form, for example after reading an invoice. */
@@ -46,6 +48,12 @@ type AppState = {
   showToast: (message: string) => void
   incomingCall: boolean
   setIncomingCall: (ringing: boolean) => void
+  /** What KBC Trust may use and do. Every check reads these choices. */
+  trustControls: TrustControls
+  setTrustControls: (update: (prev: TrustControls) => TrustControls) => void
+  /** "What KBC Trust did": checks run and changes made, newest first. */
+  activity: ActivityEntry[]
+  logActivity: (title: string, detail: string) => void
 }
 
 const AppContext = createContext<AppState | null>(null)
@@ -67,12 +75,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [quickPayOpen, setQuickPayOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [incomingCall, setIncomingCall] = useState(false)
+  const [trustControls, setTrustControlsState] = useState(defaultTrustControls)
+  const [activity, setActivity] = useState(initialActivity)
+  const activityId = useRef(1)
   const toastTimer = useRef<number | undefined>(undefined)
 
   const showToast = useCallback((message: string) => {
     window.clearTimeout(toastTimer.current)
     setToast(message)
     toastTimer.current = window.setTimeout(() => setToast(null), 2200)
+  }, [])
+
+  const setTrustControls = useCallback((update: (prev: TrustControls) => TrustControls) => setTrustControlsState(update), [])
+  const logActivity = useCallback((title: string, detail: string) => {
+    const id = activityId.current++
+    setActivity((prev) => [{ id, when: timeNow(), title, detail }, ...prev])
   }, [])
 
   const logIn = useCallback(() => setLoggedIn(true), [])
@@ -140,8 +157,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
       showToast,
       incomingCall,
       setIncomingCall,
+      trustControls,
+      setTrustControls,
+      activity,
+      logActivity,
     }),
-    [loggedIn, logIn, tab, setTab, stack, push, popToRoot, accounts, transactions, makeTransfer, hideAmounts, dismissed, quickPayOpen, toast, showToast, incomingCall],
+    [
+      loggedIn,
+      logIn,
+      tab,
+      setTab,
+      stack,
+      push,
+      popToRoot,
+      accounts,
+      transactions,
+      makeTransfer,
+      hideAmounts,
+      dismissed,
+      quickPayOpen,
+      toast,
+      showToast,
+      incomingCall,
+      trustControls,
+      setTrustControls,
+      activity,
+      logActivity,
+    ],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

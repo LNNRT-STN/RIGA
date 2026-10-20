@@ -6,6 +6,7 @@ import {
   CircleCheck,
   CircleX,
   LoaderCircle,
+  LockKeyhole,
   Phone,
   ShieldAlert,
   ShieldCheck,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { checkSteps, type CheckStatus, type TrustLevel, type TrustResult } from './api'
+import { dataUse } from './controls'
 
 type LevelStyle = { label: string; icon: LucideIcon; text: string; bg: string; ring: string }
 
@@ -69,11 +71,14 @@ export function TrustVerdict({
   result,
   actions,
   footer,
+  onManageData,
   className,
 }: {
   result: TrustResult
   actions?: ReactNode
   footer?: ReactNode
+  /** Opens "What you share". Leave out where the customer can't leave the flow, such as during a call. */
+  onManageData?: () => void
   className?: string
 }) {
   const [open, setOpen] = useState(false)
@@ -159,8 +164,27 @@ export function TrustVerdict({
           Answered in {(result.elapsedMs / 1000).toFixed(1)} s by KBC Trust
           {footer}
         </p>
+        <DataUsedNote subject={result.subject} onManage={onManageData} />
       </div>
     </section>
+  )
+}
+
+/** What a check used and what happens to it afterwards, so customer control is visible at the moment it matters. */
+export function DataUsedNote({ subject, onManage }: { subject: TrustResult['subject']; onManage?: () => void }) {
+  const { used, kept } = dataUse(subject)
+  return (
+    <p className="mt-1 flex items-start gap-[6px] text-[12.5px] leading-[1.45] text-kbc-muted">
+      <LockKeyhole className="mt-[2px] size-[13px] shrink-0" strokeWidth={2} aria-hidden />
+      <span>
+        Used {used}. {kept}{' '}
+        {onManage && (
+          <button type="button" onClick={onManage} className="font-semibold text-kbc-link underline underline-offset-2">
+            What you share
+          </button>
+        )}
+      </span>
+    </p>
   )
 }
 

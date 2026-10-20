@@ -119,7 +119,9 @@ export function HomeScreen() {
 }
 
 function TopicChips() {
-  const chips: { label: string; icon: LucideIcon }[] = [
+  const { push } = useApp()
+  const chips: { label: string; icon: LucideIcon; onClick?: () => void }[] = [
+    { label: 'MyTrust', icon: ShieldCheck, onClick: () => push({ name: 'trust' }) },
     { label: 'MyNWS', icon: Newspaper },
     { label: 'MyHome', icon: House },
     { label: 'MyMobility', icon: Signpost },
@@ -134,10 +136,11 @@ function TopicChips() {
       >
         <Wallet className="size-[17px]" strokeWidth={1.6} />
       </button>
-      {chips.map(({ label, icon: Icon }) => (
+      {chips.map(({ label, icon: Icon, onClick }) => (
         <button
           key={label}
           type="button"
+          onClick={onClick}
           className="flex h-[33px] shrink-0 items-center gap-[6px] rounded-full bg-kbc-pale px-3 text-[15px] text-kbc-navy"
         >
           <Icon className="size-[16px]" strokeWidth={1.5} />
