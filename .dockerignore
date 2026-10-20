@@ -3,7 +3,6 @@
 **/__pycache__
 .git
 vendor
-pitch_assets
 .env
 .env.*
 src/backend/.demo-keys
