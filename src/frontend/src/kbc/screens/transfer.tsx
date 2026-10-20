@@ -1,10 +1,11 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   ChevronRight,
   CircleCheck,
   FileText,
   LoaderCircle,
   QrCode,
+  ShieldX,
   SquareArrowRight,
   SquareArrowUpRight,
   Users,
@@ -12,11 +13,13 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { beneficiaries } from '../data'
+import { beneficiaries, business, guardianAngel, type Account } from '../data'
 import { formatAmount, formatIban, isValidBelgianIban, parseAmount } from '../format'
 import { PushedPage } from '../layout'
-import { useApp } from '../store'
+import { useApp, type TransferPrefill } from '../store'
 import { Amount } from '../ui'
+import { checkPayee, type TrustResult } from '../trust/api'
+import { CheckingSteps, SecondaryAction, TrustBadge, TrustVerdict } from '../trust/components'
 
 /** Bottom sheet behind the floating transfer button. */
 export function QuickPaySheet() {
@@ -64,7 +67,7 @@ export function QuickPaySheet() {
           <BigAction icon={SquareArrowUpRight} label="Transfer" accent onClick={() => push({ name: 'transfer' })} />
         </div>
         <div className="pt-4">
-          <SheetRow icon={FileText} label="Pay an invoice" onClick={soon('Paying an invoice')} />
+          <SheetRow icon={FileText} label="Pay an invoice" onClick={() => push({ name: 'invoices' })} />
           <SheetRow icon={Users} label="Split group expenses" onClick={soon('Splitting expenses')} />
         </div>
       </div>
@@ -109,15 +112,15 @@ function SheetRow({ icon: Icon, label, onClick }: { icon: LucideIcon; label: str
 
 type Stage = 'form' | 'review' | 'processing' | 'done'
 
-export function TransferScreen({ beneficiaryId }: { beneficiaryId?: string }) {
+export function TransferScreen({ beneficiaryId, prefill }: { beneficiaryId?: string; prefill?: TransferPrefill }) {
   const { accounts, makeTransfer, pop, popToRoot } = useApp()
   const preset = beneficiaries.find((b) => b.id === beneficiaryId)
-  const [fromId, setFromId] = useState(beneficiaryId === 'own' ? 'savings' : 'current')
+  const [fromId, setFromId] = useState(prefill?.fromId ?? (beneficiaryId === 'own' ? 'savings' : 'current'))
   const ownTarget = beneficiaryId === 'own' ? accounts.find((a) => a.id !== fromId) : undefined
-  const [name, setName] = useState(preset?.name ?? ownTarget?.name ?? '')
-  const [iban, setIban] = useState(preset?.iban ?? ownTarget?.iban ?? '')
-  const [amountText, setAmountText] = useState('')
-  const [message, setMessage] = useState('')
+  const [name, setName] = useState(prefill?.name ?? preset?.name ?? ownTarget?.name ?? '')
+  const [iban, setIban] = useState(prefill?.iban ?? preset?.iban ?? ownTarget?.iban ?? '')
+  const [amountText, setAmountText] = useState(prefill?.amount ?? '')
+  const [message, setMessage] = useState(prefill?.message ?? '')
   const [stage, setStage] = useState<Stage>('form')
   const [errors, setErrors] = useState<Partial<Record<'name' | 'iban' | 'amount', string>>>({})
   const [reference, setReference] = useState('')
@@ -180,32 +183,16 @@ export function TransferScreen({ beneficiaryId }: { beneficiaryId?: string }) {
   if (stage === 'review') {
     return (
       <PushedPage title="Check your transfer" onBack={() => setStage('form')}>
-        <div className="px-4 pt-4 pb-10">
-          <div className="rounded-[12px] bg-kbc-pale px-4 py-6 text-center">
-            <p className="text-[14.5px] text-kbc-muted">You are sending</p>
-            <Amount value={amount} className="mt-1 block text-[32px] font-extrabold text-kbc-navy" />
-          </div>
-          <dl className="mt-4 divide-y divide-kbc-line">
-            <ReviewRow label="To" value={name} detail={formatIban(iban)} />
-            <ReviewRow label="From" value={from.name} detail={from.iban} />
-            <ReviewRow label="Date" value="Today, 18 Oct 2026" />
-            <ReviewRow label="Message" value={message.trim() || 'No message'} />
-            <ReviewRow label="Costs" value="Free" />
-          </dl>
-          <p className="mt-4 rounded-[8px] bg-kbc-warning-bg px-4 py-3 text-[13.5px] leading-[1.4] text-kbc-warning">
-            Demo: this transfer is simulated with fictional data.
-          </p>
-          <button
-            type="button"
-            onClick={confirm}
-            className="mt-6 h-[48px] w-full rounded-full bg-kbc-blue text-[17px] font-semibold text-white transition-transform duration-150 active:scale-[0.98]"
-          >
-            Confirm transfer
-          </button>
-          <button type="button" onClick={pop} className="mt-2 h-[48px] w-full rounded-full text-[17px] font-semibold text-kbc-link">
-            Cancel
-          </button>
-        </div>
+        <ReviewStage
+          name={name}
+          iban={iban}
+          amount={amount}
+          from={from}
+          message={message}
+          onUseIban={(verified) => setIban(verified)}
+          onConfirm={confirm}
+          onCancel={pop}
+        />
       </PushedPage>
     )
   }
@@ -285,6 +272,154 @@ export function TransferScreen({ beneficiaryId }: { beneficiaryId?: string }) {
   )
 }
 
+/**
+ * Review step with the proactive KBC Trust check: before the customer can confirm, the payee is
+ * checked. High risk blocks the payment, mid risk warns, uncertain cases go to Secure4u.
+ */
+function ReviewStage({
+  name,
+  iban,
+  amount,
+  from,
+  message,
+  onUseIban,
+  onConfirm,
+  onCancel,
+}: {
+  name: string
+  iban: string
+  amount: number
+  from: Account
+  message: string
+  onUseIban: (iban: string) => void
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  const { showToast, popToRoot } = useApp()
+  const isBusiness = from.kind === 'business'
+  // Results are keyed by the payee, so switching to the verified account starts a fresh check.
+  const key = `${name.trim()}|${formatIban(iban)}|${isBusiness}`
+  const [check, setCheck] = useState<{ key: string; result?: TrustResult; failed?: boolean } | null>(null)
+  const trust = check?.key === key ? (check.result ?? null) : null
+  const failed = check?.key === key && check.failed === true
+
+  useEffect(() => {
+    let current = true
+    checkPayee({ name: name.trim(), iban: formatIban(iban), account: isBusiness ? 'business' : 'personal' })
+      .then((result) => current && setCheck({ key, result }))
+      .catch(() => current && setCheck({ key, failed: true }))
+    return () => {
+      current = false
+    }
+  }, [key, name, iban, isBusiness])
+
+  if (trust?.decision === 'block') {
+    const contact = trust.verifiedContact
+    return (
+      <div className="px-4 pt-3 pb-10" aria-live="polite">
+        <p className="flex items-center gap-2 pb-3 text-[15px] font-bold text-kbc-danger">
+          <ShieldX className="size-[20px]" strokeWidth={1.8} />
+          Payment of {formatAmount(amount)} stopped
+        </p>
+        <TrustVerdict
+          result={trust}
+          actions={
+            <>
+              {contact?.iban && (
+                <button
+                  type="button"
+                  onClick={() => onUseIban(contact.iban!)}
+                  className="min-h-[48px] w-full rounded-full bg-kbc-blue px-4 py-2 text-[16px] leading-tight font-semibold text-white transition-transform duration-150 active:scale-[0.98]"
+                >
+                  Pay the verified account
+                  <span className="block text-[13px] font-normal tabular-nums opacity-90">{contact.iban}</span>
+                </button>
+              )}
+              {contact && (
+                <SecondaryAction onClick={() => showToast(`Calling ${contact.name} on ${contact.phone} (simulated)`)}>
+                  Call {contact.name}
+                  <span className="block text-[13px] font-normal tabular-nums">{contact.phone} · verified number</span>
+                </SecondaryAction>
+              )}
+            </>
+          }
+        />
+        <p className="mt-4 rounded-[8px] bg-kbc-pale px-4 py-3 text-[13.5px] leading-[1.45] text-kbc-navy">
+          KBC Trust blocked this payment automatically. No money has left your account.{' '}
+          {isBusiness
+            ? `${business.ceo}, second approver at ${business.name}, has been informed.`
+            : `Your Guardian Angel ${guardianAngel.name} has been informed.`}
+        </p>
+        <button type="button" onClick={popToRoot} className="mt-2 h-[48px] w-full rounded-full text-[17px] font-semibold text-kbc-link">
+          Cancel payment
+        </button>
+      </div>
+    )
+  }
+
+  const canConfirm = trust !== null && trust.decision !== 'review'
+
+  return (
+    <div className="px-4 pt-4 pb-10">
+      <div className="rounded-[12px] bg-kbc-pale px-4 py-6 text-center">
+        <p className="text-[14.5px] text-kbc-muted">You are sending</p>
+        <Amount value={amount} className="mt-1 block text-[32px] font-extrabold text-kbc-navy" />
+      </div>
+      <dl className="mt-4 divide-y divide-kbc-line">
+        <ReviewRow
+          label="To"
+          value={name}
+          detail={formatIban(iban)}
+          badge={trust && trust.decision === 'allow' ? <TrustBadge result={trust} className="mt-2" /> : undefined}
+        />
+        <ReviewRow label="From" value={from.name} detail={from.iban} />
+        <ReviewRow label="Date" value="Today, 20 Oct 2026" />
+        <ReviewRow label="Message" value={message.trim() || 'No message'} />
+        <ReviewRow label="Costs" value="Free" />
+      </dl>
+
+      <div aria-live="polite" className="mt-2">
+        {!trust && !failed && <CheckingSteps subject="payee" />}
+        {failed && (
+          <p className="rounded-[8px] bg-kbc-warning-bg px-4 py-3 text-[13.5px] leading-[1.4] text-kbc-warning">
+            KBC Trust could not check this account right now. Only continue if you know the beneficiary.
+          </p>
+        )}
+        {trust && trust.decision !== 'allow' && <TrustVerdict result={trust} />}
+      </div>
+
+      <p className="mt-4 rounded-[8px] bg-kbc-warning-bg px-4 py-3 text-[13.5px] leading-[1.4] text-kbc-warning">
+        Demo: this transfer is simulated with fictional data.
+      </p>
+      {trust?.decision === 'review' ? (
+        <button
+          type="button"
+          onClick={() => {
+            showToast('Secure4u will review this payment within 15 minutes (simulated)')
+            popToRoot()
+          }}
+          className="mt-6 h-[48px] w-full rounded-full bg-kbc-blue text-[17px] font-semibold text-white transition-transform duration-150 active:scale-[0.98]"
+        >
+          Send to Secure4u for review
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={!canConfirm && !failed}
+          className="mt-6 h-[48px] w-full rounded-full bg-kbc-blue text-[17px] font-semibold text-white transition-[transform,opacity] duration-150 active:scale-[0.98] disabled:opacity-50"
+        >
+          {!trust && !failed ? 'Checking the beneficiary' : 'Confirm transfer'}
+        </button>
+      )}
+      <button type="button" onClick={onCancel} className="mt-2 h-[48px] w-full rounded-full text-[17px] font-semibold text-kbc-link">
+        Cancel
+      </button>
+    </div>
+  )
+}
+
+
 function inputClass(error?: string) {
   return cn(
     'h-[48px] w-full rounded-[8px] border-[1.5px] bg-white px-3 text-[16px] text-kbc-navy outline-none placeholder:text-kbc-placeholder focus:border-kbc-blue',
@@ -302,13 +437,14 @@ function Field({ label, error, children }: { label: string; error?: string; chil
   )
 }
 
-function ReviewRow({ label, value, detail }: { label: string; value: string; detail?: string }) {
+function ReviewRow({ label, value, detail, badge }: { label: string; value: string; detail?: string; badge?: ReactNode }) {
   return (
     <div className="flex gap-4 py-3">
       <dt className="w-[86px] shrink-0 text-[14.5px] text-kbc-muted">{label}</dt>
       <dd className="min-w-0 flex-1 text-right">
         <span className="block text-[15.5px] break-words text-kbc-navy">{value}</span>
         {detail && <span className="block text-[13px] text-kbc-muted">{detail}</span>}
+        {badge}
       </dd>
     </div>
   )

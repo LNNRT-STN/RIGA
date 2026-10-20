@@ -7,7 +7,7 @@ export const customer = {
   clientNumber: '7BC104822',
 }
 
-export type AccountKind = 'current' | 'savings'
+export type AccountKind = 'current' | 'savings' | 'business'
 
 export type Account = {
   id: string
@@ -20,6 +20,51 @@ export type Account = {
 export const initialAccounts: Account[] = [
   { id: 'current', kind: 'current', name: 'KBC Plus Account', iban: 'BE71 0961 2345 6769', balance: 1284.37 },
   { id: 'savings', kind: 'savings', name: 'KBC Start2Save', iban: 'BE62 5100 0754 7061', balance: 3150 },
+  // Laura is office manager at Noord Design BV and holds a mandate on its business account.
+  { id: 'business', kind: 'business', name: 'Noord Design BV', iban: 'BE24 7350 0123 4538', balance: 38420.15 },
+]
+
+export const business = {
+  name: 'Noord Design BV',
+  ceo: 'Pieter Claes',
+}
+
+/** Laura's Guardian Angel: the trusted person KBC informs when it suspects fraud. */
+export const guardianAngel = { name: 'Marc Janssens', relation: 'your father' }
+
+export type InvoiceToPay = {
+  id: string
+  supplier: string
+  iban: string
+  amount: number
+  due: string
+  reference: string
+  source: string
+  accountId: string
+}
+
+// The Van Damme invoice arrived with a "new bank account" in the email: the supplier IBAN case.
+export const invoicesToPay: InvoiceToPay[] = [
+  {
+    id: 'vd-1043',
+    supplier: 'Van Damme Packaging NV',
+    iban: 'BE09 0018 3366 2157',
+    amount: 12480,
+    due: '25 Oct 2026',
+    reference: 'Invoice 2026-1043',
+    source: 'Email to Noord Design BV',
+    accountId: 'business',
+  },
+  {
+    id: 'px-0926',
+    supplier: 'Proximus',
+    iban: 'BE38 0000 1234 5672',
+    amount: 64.5,
+    due: '30 Oct 2026',
+    reference: 'Invoice 2026-09-4471',
+    source: 'Zoomit',
+    accountId: 'current',
+  },
 ]
 
 export type TransactionCategory =
@@ -94,9 +139,19 @@ export type ForYouItem = {
   body: string
   footnote?: string
   icon: 'kate' | 'house-search' | 'house-key' | 'lightbulb' | 'shield'
+  /** Opens this screen instead of asking Kate about the card. */
+  opens?: 'trust'
 }
 
 export const forYou: ForYouItem[] = [
+  {
+    id: 'trust',
+    kind: 'kate',
+    title: 'Is this real?',
+    body: 'Not sure about an invoice, a caller or a website? Kate checks it with KBC Trust in seconds.',
+    icon: 'kate',
+    opens: 'trust',
+  },
   {
     id: 'warranty',
     kind: 'kate',
