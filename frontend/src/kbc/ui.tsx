@@ -9,13 +9,13 @@ export function KateMark({ className, plain = false }: { className?: string; pla
   return (
     <svg viewBox="0 0 32 32" className={cn('size-8 shrink-0', className)} aria-hidden>
       {!plain && <circle cx="16" cy="16" r="15" fill="#eef7fd" stroke="#bfe0f6" strokeWidth="1.5" />}
-      <g stroke="#3b8fd3" strokeWidth="2" strokeLinecap="round" fill="none">
+      <g stroke="var(--color-kbc-blue)" strokeWidth="2" strokeLinecap="round" fill="none">
         <path d="M12.5 11h7" />
         <path d="M9 16h14" />
         <path d="M12.5 21h7" />
       </g>
-      <circle cx="16" cy="7.6" r="1.3" fill="#3b8fd3" />
-      <circle cx="16" cy="24.4" r="1.3" fill="#3b8fd3" />
+      <circle cx="16" cy="7.6" r="1.3" fill="var(--color-kbc-blue)" />
+      <circle cx="16" cy="24.4" r="1.3" fill="var(--color-kbc-blue)" />
     </svg>
   )
 }
@@ -85,10 +85,10 @@ export function KatePill({ placeholder = 'How can I help?', onClick }: { placeho
     <button
       type="button"
       onClick={onClick}
-      className="flex h-[40px] min-w-0 flex-1 items-center gap-2 rounded-full border-[1.5px] border-[#c8def2] bg-white pr-3 pl-3 text-left transition-colors duration-150 active:bg-kbc-pale"
+      className="flex h-[40px] min-w-0 flex-1 items-center gap-2 rounded-full border-[1.5px] border-kbc-kate-border bg-white pr-3 pl-3 text-left transition-colors duration-150 active:bg-kbc-pale"
     >
-      <Search className="size-[18px] shrink-0 text-[#7d8ca3]" strokeWidth={1.75} />
-      <span className="min-w-0 flex-1 truncate text-[15.5px] text-[#76869c]">{placeholder}</span>
+      <Search className="size-[18px] shrink-0 text-kbc-placeholder" strokeWidth={1.75} />
+      <span className="min-w-0 flex-1 truncate text-[15.5px] text-kbc-placeholder">{placeholder}</span>
       <span className="flex items-center gap-1">
         <KateMark className="size-[16px]" />
         <span className="text-[16px] font-extrabold tracking-[-0.01em] text-kbc-navy">Kate</span>
@@ -163,7 +163,7 @@ export function TabBar() {
             onClick={() => setTab(id)}
             className={cn(
               'flex h-full flex-1 flex-col items-center justify-center gap-[3px] rounded-full text-kbc-ink transition-colors duration-200',
-              active && 'bg-[#e4e8ec]',
+              active && 'bg-kbc-nav-selected',
             )}
           >
             <Icon
@@ -263,7 +263,7 @@ export function Artwork({
   if (image) return <img src={image} alt="" className={cn('object-cover', className)} />
   const tints = {
     blue: 'from-[#cfe8f8] via-[#a6d3f1] to-[#5fb0e6] text-white',
-    green: 'from-[#e3f4dc] via-[#b9e2a6] to-[#74bf4f] text-white',
+    green: 'from-[#e3f4dc] via-[#b9e2a6] to-kbc-lime text-white',
     sand: 'from-[#f6ecd9] via-[#e9cfa3] to-[#c99a5b] text-white',
     navy: 'from-[#4d84b7] via-[#2f5f93] to-[#1d3f6b] text-white/90',
   }
@@ -297,7 +297,7 @@ export function PromoCard({
 }) {
   return (
     <div className="px-4">
-      <Card className={cn('flex min-h-[146px] overflow-hidden', pale && 'bg-[#eff7fc] shadow-none')}>
+      <Card className={cn('flex min-h-[146px] overflow-hidden', pale && 'bg-kbc-surface-blue shadow-none')}>
         <div className="flex flex-1 flex-col justify-between gap-4 py-[18px] pr-2 pl-4">
           <div>
             {title && <p className="mb-1 text-[17px] font-extrabold text-kbc-navy">{title}</p>}

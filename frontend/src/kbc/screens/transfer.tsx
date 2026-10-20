@@ -34,7 +34,7 @@ export function QuickPaySheet() {
         type="button"
         aria-label="Close"
         onClick={close}
-        className="absolute inset-0 animate-in bg-[#14294d]/45 duration-200 fade-in"
+        className="absolute inset-0 animate-in bg-kbc-navy/45 duration-200 fade-in"
       />
       <div
         role="dialog"
@@ -192,7 +192,7 @@ export function TransferScreen({ beneficiaryId }: { beneficiaryId?: string }) {
             <ReviewRow label="Message" value={message.trim() || 'No message'} />
             <ReviewRow label="Costs" value="Free" />
           </dl>
-          <p className="mt-4 rounded-[8px] bg-[#fff5da] px-4 py-3 text-[13.5px] leading-[1.4] text-[#805800]">
+          <p className="mt-4 rounded-[8px] bg-kbc-warning-bg px-4 py-3 text-[13.5px] leading-[1.4] text-kbc-warning">
             Demo: this transfer is simulated with fictional data.
           </p>
           <button
@@ -236,7 +236,7 @@ export function TransferScreen({ beneficiaryId }: { beneficiaryId?: string }) {
                   name="from"
                   checked={a.id === fromId}
                   onChange={() => setFromId(a.id)}
-                  className="size-[18px] accent-[#2b75b6]"
+                  className="size-[18px] accent-kbc-link"
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] text-kbc-navy uppercase">{a.name}</span>
@@ -287,8 +287,8 @@ export function TransferScreen({ beneficiaryId }: { beneficiaryId?: string }) {
 
 function inputClass(error?: string) {
   return cn(
-    'h-[48px] w-full rounded-[8px] border-[1.5px] bg-white px-3 text-[16px] text-kbc-navy outline-none placeholder:text-[#7586a0] focus:border-kbc-blue',
-    error ? 'border-[#b42318]' : 'border-[#8195b1]',
+    'h-[48px] w-full rounded-[8px] border-[1.5px] bg-white px-3 text-[16px] text-kbc-navy outline-none placeholder:text-kbc-placeholder focus:border-kbc-blue',
+    error ? 'border-kbc-danger' : 'border-kbc-control',
   )
 }
 
@@ -297,7 +297,7 @@ function Field({ label, error, children }: { label: string; error?: string; chil
     <label className="block">
       <span className="block pb-2 text-[14.5px] font-semibold text-kbc-navy">{label}</span>
       {children}
-      {error && <span className="block pt-[6px] text-[13.5px] text-[#b42318]">{error}</span>}
+      {error && <span className="block pt-[6px] text-[13.5px] text-kbc-danger">{error}</span>}
     </label>
   )
 }
