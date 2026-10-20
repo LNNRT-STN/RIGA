@@ -8,6 +8,8 @@ const scenarios: { id: DemoScenario; key: string; title: string; detail: string 
   { id: 'supplier', key: '3', title: 'Supplier account changed', detail: 'Payment stopped before it leaves' },
   { id: 'control', key: '4', title: 'Customer control', detail: 'What KBC Trust may use, and what it did' },
   { id: 'consent', key: '5', title: 'Kate asks first', detail: 'Document checks off: Kate asks before reading' },
+  { id: 'sealed', key: '6', title: 'Verified invoice', detail: 'Proximus sealed it, KBC checks the seal' },
+  { id: 'tampered', key: '7', title: 'Sealed invoice changed', detail: 'Looks perfect, but the IBAN was swapped' },
   { id: 'reset', key: '0', title: 'Reset demo', detail: 'Clears reports and reloads' },
 ]
 

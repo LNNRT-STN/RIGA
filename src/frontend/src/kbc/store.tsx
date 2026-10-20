@@ -6,7 +6,7 @@ export type Tab = 'home' | 'mykbc' | 'invest' | 'offers'
 
 export type Route =
   | { name: 'account'; accountId: string }
-  | { name: 'kate'; prompt?: string; attach?: boolean }
+  | { name: 'kate'; prompt?: string; attach?: boolean; document?: string; run?: number }
   | { name: 'settings' }
   | { name: 'messages' }
   | { name: 'transfer'; beneficiaryId?: string; prefill?: TransferPrefill }

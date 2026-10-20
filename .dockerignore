@@ -6,3 +6,4 @@ vendor
 pitch_assets
 .env
 .env.*
+src/backend/.demo-keys

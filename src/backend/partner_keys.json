@@ -1,0 +1,26 @@
+{
+  "_note": "SIMULATED: public keys of fictional demo partners, made by make_demo_pdfs.py.",
+  "keys": [
+    {
+      "kid": "proximus-2026-01",
+      "partner": "proximus",
+      "x": "RkdJIk00NGTjajO7QBThWGawabGjd7iTZChHGFsaJQg",
+      "validFrom": "2026-03-12",
+      "status": "active"
+    },
+    {
+      "kid": "proximus-2025-01",
+      "partner": "proximus",
+      "x": "fA6PyTY3ki5AakMZclZYeNFohztqv92V7xjBhsOHBqw",
+      "validFrom": "2025-03-01",
+      "status": "revoked"
+    },
+    {
+      "kid": "van-damme-2026-01",
+      "partner": "van-damme",
+      "x": "fmi4mogyTrwK7baoXo72S5tJL098nKEZq6VUWk3eYa8",
+      "validFrom": "2026-06-03",
+      "status": "active"
+    }
+  ]
+}

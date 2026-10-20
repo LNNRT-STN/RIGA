@@ -10,6 +10,8 @@ import re
 import zlib
 
 _STREAM_RE = re.compile(rb"<<(.*?)>>\s*stream\r?\n(.*?)\r?\n?endstream", re.S)
+# A KBC Trust invoice seal in the document information dictionary (see seal.py).
+_SEAL_RE = re.compile(rb"/KBCTrustSeal\s*\(([A-Za-z0-9_.-]{1,2048})\)")
 _TOKEN_RE = re.compile(
     rb"\((?:\\.|[^\\()]|\((?:\\.|[^\\()])*\))*\)"  # literal string, one nesting level
     rb"|<[0-9A-Fa-f\s]*>"                         # hex string
@@ -185,3 +187,15 @@ def extract_text(data):
     except Exception:  # best effort: a broken PDF just yields what we have
         pass
     return "\n".join(lines)
+
+
+def extract_seals(data):
+    """Return the distinct KBC Trust seals found in a PDF, in order. Never raises."""
+    if not data or not data.startswith(b"%PDF"):
+        return []
+    seals = []
+    for match in _SEAL_RE.finditer(data):
+        token = match.group(1).decode("ascii")
+        if token not in seals:
+            seals.append(token)
+    return seals
