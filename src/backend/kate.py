@@ -8,14 +8,16 @@ Model: env KATE_MODEL (default below). Without a key the endpoint answers 503 an
 falls back to its scripted reply.
 """
 
+import http.client
 import json
 import os
-import urllib.error
-import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ENV_FILE = os.path.normpath(os.path.join(HERE, "..", "..", ".env"))
-URL = "https://openrouter.ai/api/v1/chat/completions"
+# Fixed host and path: no part of the request target comes from the customer, and
+# http.client never follows redirects.
+HOST = "openrouter.ai"
+PATH = "/api/v1/chat/completions"
 DEFAULT_MODEL = "anthropic/claude-haiku-5.5"
 TIMEOUT_S = 12
 MAX_MESSAGE = 1000
@@ -101,23 +103,23 @@ def reply(message, history=None, context=None):
     if not key:
         raise KateUnavailable("OPENROUTER_API_KEY is not set")
     payload = {"model": model(), "messages": build_messages(message, history, context), "max_tokens": 300}
-    request = urllib.request.Request(
-        URL,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": "Bearer " + key,
-            "Content-Type": "application/json",
-            "X-Title": "KBC Trust demo (Team Riga)",
-        },
-    )
+    headers = {
+        "Authorization": "Bearer " + key,
+        "Content-Type": "application/json",
+        "X-Title": "KBC Trust demo (Team Riga)",
+    }
+    connection = http.client.HTTPSConnection(HOST, timeout=TIMEOUT_S)
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_S) as response:
-            data = json.loads(response.read().decode("utf-8"))
+        connection.request("POST", PATH, body=json.dumps(payload).encode("utf-8"), headers=headers)
+        response = connection.getresponse()
+        if response.status != 200:
+            raise KateUnavailable("OpenRouter returned %d" % response.status)
+        data = json.loads(response.read().decode("utf-8"))
         text = data["choices"][0]["message"]["content"].strip()
-    except urllib.error.HTTPError as err:
-        raise KateUnavailable("OpenRouter returned %d" % err.code)
-    except (urllib.error.URLError, OSError, ValueError, KeyError, IndexError, TypeError, AttributeError) as err:
+    except (OSError, http.client.HTTPException, ValueError, KeyError, IndexError, TypeError, AttributeError) as err:
         raise KateUnavailable("OpenRouter failed: %s" % err)
+    finally:
+        connection.close()
     if not text:
         raise KateUnavailable("OpenRouter returned an empty reply")
     return {"text": text, "model": data.get("model") or model()}
