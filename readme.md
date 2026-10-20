@@ -47,6 +47,21 @@ Then paste the key from the team's password manager into `.env`. Keep the key in
 
 All customer data is fictional, and transfers are simulated.
 
+### KBC Trust demo
+
+`npm run dev` also starts the KBC Trust backend (`src/backend/server.py`, Python 3 standard library, no installs) and proxies `/api` to it. Set `KBC_TRUST_BACKEND=off` to start only the frontend. See [src/backend/README.md](src/backend/README.md) for the endpoints and what is rule based or simulated.
+
+On a laptop screen, a panel next to the phone starts the three pitch scenarios. Keys work too:
+
+- `1` Fake Proximus invoice checked in Kate (sample PDFs in `src/frontend/public/demo/`)
+- `2` Deepfake CEO video call
+- `3` Supplier invoice with a changed account number, stopped in the transfer review
+- `0` Reset report counts and reload
+
+### Deploy to Cloud Run
+
+The root `Dockerfile` builds the app and runs one container: the Python server serves the API and the built frontend on `$PORT`. Test it locally with `docker build -t riga . && docker run -p 8080:8080 riga`, then open http://localhost:8080. In Cloud Run, keep the maximum number of instances at 1, because scam reports are kept in memory.
+
 ## Multica agents
 
 The team's [Multica](https://multica.ai/) workspace `riga` has two agents that run on the integration lead's machine:

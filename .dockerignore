@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+**/__pycache__
+.git
+vendor
+pitch_assets
+.env
+.env.*

@@ -1,11 +1,11 @@
 import type { Account } from './data'
 import { formatAmount } from './format'
 
-export type KateAction = { label: string; action: 'transfer' | 'account' | 'call' }
+export type KateAction = { label: string; action: 'transfer' | 'account' | 'call' | 'upload' }
 
 export type KateReply = { text: string; actions?: KateAction[] }
 
-export const kateSuggestions = ['When can I call?', 'What can you do?', 'Make a transfer', 'What is my balance?']
+export const kateSuggestions = ['Is this real?', 'When can I call?', 'What can you do?', 'Make a transfer', 'What is my balance?']
 
 /**
  * Scripted replies for the demo. Replace this function with a call to the team's backend to put
@@ -34,9 +34,15 @@ export async function getKateReply(message: string, context: { accounts: Account
       actions: [{ label: 'Call KBC Live', action: 'call' }],
     }
   }
+  if (/(real|fake|scam|fraud|phishing|trust)/.test(text)) {
+    return {
+      text: 'Send me the invoice or email, or type a website address. I’ll check it against KBC’s verified partners and reports from other KBC customers.',
+      actions: [{ label: 'Upload a document', action: 'upload' }],
+    }
+  }
   if (/(what can you do|help)/.test(text)) {
     return {
-      text: 'I can show your balance and payments, help you make a transfer, block a card or find the right person to talk to. Just ask.',
+      text: 'I can show your balance and payments, help you make a transfer, check whether an invoice, caller or website is real, or find the right person to talk to. Just ask.',
     }
   }
   if (/(dream|save)/.test(text)) {

@@ -5,10 +5,15 @@ export type Tab = 'home' | 'mykbc' | 'invest' | 'offers'
 
 export type Route =
   | { name: 'account'; accountId: string }
-  | { name: 'kate'; prompt?: string }
+  | { name: 'kate'; prompt?: string; attach?: boolean }
   | { name: 'settings' }
   | { name: 'messages' }
-  | { name: 'transfer'; beneficiaryId?: string }
+  | { name: 'transfer'; beneficiaryId?: string; prefill?: TransferPrefill }
+  | { name: 'trust' }
+  | { name: 'invoices' }
+
+/** Values a flow can hand to the transfer form, for example after reading an invoice. */
+export type TransferPrefill = { fromId: string; name: string; iban: string; amount: string; message: string }
 
 export type TransferInput = {
   fromId: string
@@ -39,6 +44,8 @@ type AppState = {
   setQuickPayOpen: (open: boolean) => void
   toast: string | null
   showToast: (message: string) => void
+  incomingCall: boolean
+  setIncomingCall: (ringing: boolean) => void
 }
 
 const AppContext = createContext<AppState | null>(null)
@@ -59,6 +66,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set())
   const [quickPayOpen, setQuickPayOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [incomingCall, setIncomingCall] = useState(false)
   const toastTimer = useRef<number | undefined>(undefined)
 
   const showToast = useCallback((message: string) => {
@@ -66,6 +74,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setToast(message)
     toastTimer.current = window.setTimeout(() => setToast(null), 2200)
   }, [])
+
+  const logIn = useCallback(() => setLoggedIn(true), [])
+  const setTab = useCallback((next: Tab) => {
+    setStack([])
+    setTabState(next)
+  }, [])
+  const push = useCallback((route: Route) => {
+    setQuickPayOpen(false)
+    setStack((prev) => [...prev, route])
+  }, [])
+  const popToRoot = useCallback(() => setStack([]), [])
 
   const makeTransfer = useCallback((input: TransferInput) => {
     const reference = `KBC-${Date.now().toString(36).toUpperCase().slice(-6)}`
@@ -95,7 +114,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppState>(
     () => ({
       loggedIn,
-      logIn: () => setLoggedIn(true),
+      logIn,
       logOut: () => {
         setLoggedIn(false)
         setStack([])
@@ -103,17 +122,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setQuickPayOpen(false)
       },
       tab,
-      setTab: (next) => {
-        setStack([])
-        setTabState(next)
-      },
+      setTab,
       stack,
-      push: (route) => {
-        setQuickPayOpen(false)
-        setStack((prev) => [...prev, route])
-      },
+      push,
       pop: () => setStack((prev) => prev.slice(0, -1)),
-      popToRoot: () => setStack([]),
+      popToRoot,
       accounts,
       transactions,
       makeTransfer,
@@ -125,8 +138,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setQuickPayOpen,
       toast,
       showToast,
+      incomingCall,
+      setIncomingCall,
     }),
-    [loggedIn, tab, stack, accounts, transactions, makeTransfer, hideAmounts, dismissed, quickPayOpen, toast, showToast],
+    [loggedIn, logIn, tab, setTab, stack, push, popToRoot, accounts, transactions, makeTransfer, hideAmounts, dismissed, quickPayOpen, toast, showToast, incomingCall],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

@@ -17,3 +17,6 @@ __pycache__/
 
 # Files waiting to be deleted by hand
 _to_delete/
+
+# Python bytecode
+__pycache__/

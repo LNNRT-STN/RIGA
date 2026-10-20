@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Bell, CarFront, ChartPie, HeartHandshake, PiggyBank, Plus, Wallet } from 'lucide-react'
+import { Bell, Briefcase, CarFront, ChartPie, HeartHandshake, PiggyBank, Plus, Wallet } from 'lucide-react'
 import { customer, investments, kateCoins } from '../data'
 import { TabPage } from '../layout'
 import { useApp } from '../store'
@@ -11,7 +11,7 @@ export function MyKbcScreen() {
     <TabPage title="My KBC" katePrompt="Make a transfer?">
       <Section title="Accounts" onNew={() => setTab('offers')}>
         {accounts.map((a) => {
-          const Icon = a.kind === 'savings' ? PiggyBank : Wallet
+          const Icon = a.kind === 'savings' ? PiggyBank : a.kind === 'business' ? Briefcase : Wallet
           return (
             <button key={a.id} type="button" onClick={() => push({ name: 'account', accountId: a.id })} className="w-full text-left">
               <Card className="flex min-h-[72px] items-center gap-3 px-3 py-3 transition-transform duration-150 active:scale-[0.99]">

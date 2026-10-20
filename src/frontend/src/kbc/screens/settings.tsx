@@ -16,6 +16,7 @@ import {
   LogOut,
   Moon,
   ScanFace,
+  ShieldCheck,
   Smartphone,
   Watch,
   type LucideIcon,
@@ -28,7 +29,7 @@ import { CircleButton, KateMark, ListRow } from '../ui'
 import { ForYouCard } from './home'
 
 export function SettingsScreen() {
-  const { hideAmounts, setHideAmounts, logOut, showToast } = useApp()
+  const { hideAmounts, setHideAmounts, logOut, showToast, push } = useApp()
   const soon = () => showToast('This setting is not part of the demo')
 
   const sections: { title: string; rows: [string, LucideIcon][] }[] = [
@@ -58,6 +59,7 @@ export function SettingsScreen() {
     {
       title: 'Security',
       rows: [
+        ['KBC Trust', ShieldCheck],
         ['Secret code', KeyRound],
         ['Face ID', ScanFace],
         ['Activate on another device', Fingerprint],
@@ -79,7 +81,7 @@ export function SettingsScreen() {
         <section key={s.title}>
           <h2 className="px-4 pt-7 pb-2 text-[19px] font-extrabold text-kbc-navy">{s.title}</h2>
           {s.rows.map(([label, icon]) => (
-            <ListRow key={label} icon={icon} label={label} onClick={soon} />
+            <ListRow key={label} icon={icon} label={label} onClick={label === 'KBC Trust' ? () => push({ name: 'trust' }) : soon} />
           ))}
         </section>
       ))}

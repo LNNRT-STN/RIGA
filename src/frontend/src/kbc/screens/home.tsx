@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   Bike,
+  Briefcase,
   ChevronDown,
   Coins,
   FileText,
@@ -171,7 +172,7 @@ function AccountCarousel() {
           </span>
         </button>
         {accounts.map((account, i) => {
-          const Icon = account.kind === 'savings' ? PiggyBank : Wallet
+          const Icon = account.kind === 'savings' ? PiggyBank : account.kind === 'business' ? Briefcase : Wallet
           return (
             <div key={account.id} className="relative shrink-0 snap-start">
               <button
@@ -275,7 +276,7 @@ export function ForYouCard({ item, unread = false }: { item: ForYouItem; unread?
       <Card className="flex gap-4 py-4 pr-11 pl-4">
         <button
           type="button"
-          onClick={() => push({ name: 'kate', prompt: item.body })}
+          onClick={() => push(item.opens ? { name: item.opens } : { name: 'kate', prompt: item.body })}
           className="contents text-left"
         >
           <span className="shrink-0 pt-1">

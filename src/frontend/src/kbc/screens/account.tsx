@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
+  Briefcase,
   ArrowLeft,
   ArrowLeftRight,
   Banknote,
@@ -60,7 +61,7 @@ export function AccountScreen({ accountId }: { accountId: string }) {
   const { accounts, transactions, pop, push, showToast, setQuickPayOpen } = useApp()
   const [query, setQuery] = useState('')
   const account = accounts.find((a) => a.id === accountId) ?? accounts[0]
-  const AccountIcon = account.kind === 'savings' ? PiggyBank : Wallet
+  const AccountIcon = account.kind === 'savings' ? PiggyBank : account.kind === 'business' ? Briefcase : Wallet
 
   const own = transactions.filter((t) => t.accountId === account.id)
   const reserved = own.filter((t) => t.category === 'reservation').reduce((sum, t) => sum + t.amount, 0)

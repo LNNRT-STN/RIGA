@@ -1,0 +1,79 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 3257 >>
+stream
+0.953 0.980 0.996 rg 0.0 732.0 595.0 110.0 re f
+BT /F2 20 Tf 0.078 0.161 0.302 rg 1 0 0 1 56.0 780.0 Tm (Proximus) Tj ET
+BT /F1 9 Tf 0.357 0.420 0.510 rg 1 0 0 1 56.0 760.0 Tm (Proximus NV, Koning Albert II-laan 27, 1030 Brussels) Tj ET
+BT /F2 16 Tf 0.078 0.161 0.302 rg 1 0 0 1 483.0 780.0 Tm (INVOICE) Tj ET
+BT /F1 9 Tf 0.357 0.420 0.510 rg 1 0 0 1 390.5 760.0 Tm (Invoice number: PRX-2026-09-55210) Tj ET
+BT /F2 9 Tf 0.357 0.420 0.510 rg 1 0 0 1 56.0 692.0 Tm (Bill to) Tj ET
+BT /F2 9 Tf 0.357 0.420 0.510 rg 1 0 0 1 330.0 692.0 Tm (Invoice details) Tj ET
+BT /F2 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 56.0 676.0 Tm (Laura Janssens) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 56.0 662.0 Tm (Kortrijksesteenweg 112) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 56.0 648.0 Tm (9000 Gent) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 56.0 634.0 Tm (Belgium) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 330.0 676.0 Tm (Invoice date: 16 Sep 2026) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 330.0 662.0 Tm (Due date: 30 Oct 2026) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 330.0 648.0 Tm (Customer number: 7710 4428) Tj ET
+BT /F2 9 Tf 0.357 0.420 0.510 rg 1 0 0 1 56.0 582.0 Tm (Description) Tj ET
+BT /F2 9 Tf 0.357 0.420 0.510 rg 1 0 0 1 512.0 582.0 Tm (Amount) Tj ET
+0.882 0.914 0.941 RG 0.8 w 56 574.0 m 539 574.0 l S
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 56.0 556.0 Tm (Internet Flex, September 2026) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 509.0 556.0 Tm (\20044.21) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 56.0 536.0 Tm (Mobile Flex, 1 SIM) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 514.0 536.0 Tm (\2009.10) Tj ET
+0.882 0.914 0.941 RG 0.8 w 56 522.0 m 539 522.0 l S
+BT /F1 10 Tf 0.357 0.420 0.510 rg 1 0 0 1 330.0 502.0 Tm (Subtotal excl. VAT) Tj ET
+BT /F1 10 Tf 0.357 0.420 0.510 rg 1 0 0 1 509.0 502.0 Tm (\20053.31) Tj ET
+BT /F1 10 Tf 0.357 0.420 0.510 rg 1 0 0 1 330.0 486.0 Tm (VAT 21%) Tj ET
+BT /F1 10 Tf 0.357 0.420 0.510 rg 1 0 0 1 509.0 486.0 Tm (\20011.19) Tj ET
+BT /F2 12 Tf 0.078 0.161 0.302 rg 1 0 0 1 330.0 464.0 Tm (Total due: \20064.50) Tj ET
+0.953 0.980 0.996 rg 56.0 324.0 483.0 108.0 re f
+BT /F2 11 Tf 0.078 0.161 0.302 rg 1 0 0 1 70.0 416.0 Tm (Payment instructions) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 70.0 398.0 Tm (Please transfer \20064.50 to the account below.) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 70.0 383.0 Tm (IBAN: BE38 0000 1234 5672) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 70.0 368.0 Tm (BIC: BPOTBEB1) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 70.0 353.0 Tm (Structured reference: +++771/0442/55210+++) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 56.0 288.0 Tm (Thank you for being a Proximus customer.) Tj ET
+BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 56.0 272.0 Tm (Please pay by 30 Oct 2026. You can also pay with direct debit.) Tj ET
+0.882 0.914 0.941 RG 0.8 w 56 134.0 m 539 134.0 l S
+BT /F1 9 Tf 0.357 0.420 0.510 rg 1 0 0 1 56.0 120.0 Tm (Questions? Email: noreply@proximus.be    Phone: 0800 22 800) Tj ET
+BT /F1 9 Tf 0.357 0.420 0.510 rg 1 0 0 1 56.0 106.0 Tm (Website: www.proximus.be    VAT: BE 0202.239.951) Tj ET
+BT /F1 8 Tf 0.357 0.420 0.510 rg 1 0 0 1 56.0 48.0 Tm (Fictional document for a KBC Hackathon demo.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Title (Proximus invoice PRX-2026-09-55210) /Producer (KBC Trust demo generator) >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000257 00000 n 
+0000000354 00000 n 
+0000000456 00000 n 
+0000003764 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 7 0 R >>
+startxref
+3866
+%%EOF
