@@ -20,7 +20,7 @@ import { useApp, type TransferPrefill } from '../store'
 import { Amount } from '../ui'
 import { checkPayee, type TrustResult } from '../trust/api'
 import { CheckingSteps, SecondaryAction, TrustBadge, TrustVerdict } from '../trust/components'
-import { dataUse, proactivityLabel } from '../trust/controls'
+import { dataUse } from '../trust/controls'
 
 /** Bottom sheet behind the floating transfer button. */
 export function QuickPaySheet() {
@@ -378,7 +378,7 @@ function ReviewStage({
         />
         <p className="mt-4 rounded-[8px] bg-kbc-pale px-4 py-3 text-[13.5px] leading-[1.45] text-kbc-navy">
           {mode === 'stop'
-            ? `KBC Trust stopped this payment, as you asked in What you share. No money has left your account. ${guardianLine}`
+            ? `No money has left your account. ${guardianLine}`
             : 'You chose “Warn me, I decide”. No money has left your account yet.'}
         </p>
         {mode !== 'stop' && (
@@ -396,12 +396,6 @@ function ReviewStage({
         <button type="button" onClick={popToRoot} className="mt-2 h-[48px] w-full rounded-full text-[17px] font-semibold text-kbc-link">
           Cancel payment
         </button>
-        <p className="mt-2 text-center text-[13px] text-kbc-muted">
-          KBC Trust setting: {proactivityLabel(mode)}.{' '}
-          <button type="button" onClick={() => push({ name: 'trust-data' })} className="font-semibold text-kbc-link underline underline-offset-2">
-            Change
-          </button>
-        </p>
       </div>
     )
   }

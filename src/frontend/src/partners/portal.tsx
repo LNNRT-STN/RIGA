@@ -291,7 +291,7 @@ export function PartnerPortal({ onClose, tourAction }: { onClose: () => void; to
           )}
           {step === 'result' &&
             (result ? (
-              <ResultView result={result} form={form} onEdit={() => setStep('proof')} onStartOver={startOver} />
+              <ResultView result={result} form={form} onEdit={() => setStep('proof')} onStartOver={startOver} showApi={!tourAction} />
             ) : (
               <Verifying />
             ))}
@@ -689,7 +689,19 @@ const decisionStyles: Record<ApplyResult['decision'], { icon: LucideIcon; label:
   rejected: { icon: ShieldX, label: 'Not verified', band: 'bg-kbc-danger-bg', text: 'text-kbc-danger' },
 }
 
-function ResultView({ result, form, onEdit, onStartOver }: { result: ApplyResult; form: Application; onEdit: () => void; onStartOver: () => void }) {
+function ResultView({
+  result,
+  form,
+  onEdit,
+  onStartOver,
+  showApi,
+}: {
+  result: ApplyResult
+  form: Application
+  onEdit: () => void
+  onStartOver: () => void
+  showApi: boolean
+}) {
   const style = decisionStyles[result.decision]
   const Icon = style.icon
   const open = result.checks.filter((c) => c.status !== 'pass')
@@ -723,7 +735,7 @@ function ResultView({ result, form, onEdit, onStartOver }: { result: ApplyResult
         {result.decision === 'approved' && <AllChecks checks={result.checks} />}
       </div>
 
-      {result.decision === 'approved' && result.apiKey && <ApiPanel apiKey={result.apiKey} website={website} />}
+      {showApi && result.decision === 'approved' && result.apiKey && <ApiPanel apiKey={result.apiKey} website={website} />}
     </div>
   )
 }

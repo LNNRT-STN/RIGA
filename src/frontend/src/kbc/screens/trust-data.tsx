@@ -1,5 +1,5 @@
-import { useId, type ReactNode } from 'react'
-import { Building2, HeartHandshake, History, Landmark, Megaphone, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { useId } from 'react'
+import { Building2, HeartHandshake, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { guardianAngel } from '../data'
 import { PushedPage } from '../layout'
@@ -12,8 +12,6 @@ import { dataTypes, partners, proactivityLabel, proactivityOptions, type DataKey
  */
 export function TrustDataScreen() {
   const { trustControls: controls, setTrustControls, logActivity, showToast, activity } = useApp()
-  const dataOn = dataTypes.filter((d) => controls.data[d.key]).length
-  const latest = activity[0]
   const logId = useId()
 
   const toggleData = (key: DataKey) => {
@@ -59,38 +57,7 @@ export function TrustDataScreen() {
     <PushedPage title="What you share" className="bg-kbc-pale pb-12">
       <div className="bg-white px-4 pt-2 pb-5">
         <h2 className="text-[24px] leading-[1.25] font-extrabold tracking-[-0.01em] text-balance text-kbc-navy">Your data, your choice</h2>
-        <p className="mt-1 text-[15.5px] leading-[1.45] text-kbc-navy">
-          KBC Trust uses only what you allow here. Changes apply straight away, and you can undo them at any time.
-        </p>
-        <div className="mt-4 rounded-[12px] bg-kbc-pale px-4 py-3 text-[14.5px] leading-[1.4] text-kbc-navy" aria-live="polite">
-          <p className="flex items-start gap-3">
-            <ShieldCheck className="mt-[1px] size-[20px] shrink-0 text-kbc-blue" strokeWidth={1.8} />
-            <span>
-              <span className="font-bold">
-                Uses {dataOn} of {dataTypes.length} types of data
-              </span>
-              <span className="block text-kbc-muted">
-                {proactivityLabel(controls.proactivity)} · Guardian Angel {controls.guardianAngel ? 'on' : 'off'}
-              </span>
-            </span>
-          </p>
-          {latest && (
-            <p className="mt-3 flex items-start gap-3 border-t border-kbc-line pt-3">
-              <History className="mt-[1px] size-[20px] shrink-0 text-kbc-blue" strokeWidth={1.8} />
-              <span className="min-w-0">
-                <span className="block text-[12.5px] text-kbc-muted">Latest · {latest.when}</span>
-                <span className="block font-semibold">{latest.title}</span>
-                <button
-                  type="button"
-                  onClick={() => document.getElementById(logId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className="mt-1 min-h-[32px] font-semibold text-kbc-link underline underline-offset-2"
-                >
-                  See everything KBC Trust did
-                </button>
-              </span>
-            </p>
-          )}
-        </div>
+        <p className="mt-1 text-[15.5px] leading-[1.45] text-kbc-navy">KBC Trust uses only what you allow here.</p>
       </div>
 
       <SectionTitle title="What KBC Trust may use" />
@@ -100,20 +67,14 @@ export function TrustDataScreen() {
             key={type.key}
             icon={type.icon}
             label={type.label}
-            detail={type.uses}
-            note={type.kept}
+            detail={type.kept}
             on={controls.data[type.key]}
             onToggle={() => toggleData(type.key)}
           />
         ))}
       </div>
-      <p className="px-4 pt-5 pb-2 text-[13.5px] font-bold text-kbc-navy">Always on</p>
-      <div className="divide-y divide-kbc-line bg-white">
-        <FixedRow icon={Landmark} label="Fraud monitoring by KBC" detail="Every bank must do this for every account" status="Required" />
-        <FixedRow icon={Megaphone} label="Scam reports you make" detail="Only the account or phone number is shared, never your name" status="Anonymous" />
-      </div>
 
-      <SectionTitle title="How proactive KBC Trust is" detail="Before you pay a new beneficiary." />
+      <SectionTitle title="Before you pay someone new" />
       <fieldset className="bg-white">
         <legend className="sr-only">How proactive KBC Trust is</legend>
         <div className="divide-y divide-kbc-line">
@@ -134,7 +95,6 @@ export function TrustDataScreen() {
                     <span className="rounded-full bg-kbc-success-bg px-2 py-[1px] text-[12px] font-bold text-kbc-green">Recommended</span>
                   )}
                 </span>
-                <span className="block text-[13.5px] leading-[1.4] text-kbc-muted">{option.detail}</span>
               </span>
             </label>
           ))}
@@ -152,36 +112,30 @@ export function TrustDataScreen() {
         />
       </div>
 
-      <SectionTitle
-        title="Verified partners"
-        detail="KBC checked these companies, their accounts and their email domains. They may send invoices straight to Kate. They only learn whether their invoice reached you, never your balance or other payments."
-      />
+      <SectionTitle title="Companies that may send you invoices" />
       <div className="divide-y divide-kbc-line bg-white">
         {partners.map((partner) => (
           <ToggleRow
             key={partner.id}
             icon={Building2}
             label={partner.name}
-            detail={partner.sends}
-            note={`Verified by KBC since ${partner.verifiedSince}`}
+            detail="Verified by KBC"
             on={controls.partners[partner.id]}
             onToggle={() => togglePartner(partner.id)}
           />
         ))}
       </div>
 
-      <SectionTitle id={logId} title="What KBC Trust did" detail="Every check and every change, with the data it used." />
+      <SectionTitle id={logId} title="What KBC Trust did" />
       <ol className="divide-y divide-kbc-line bg-white" aria-live="polite">
         {activity.map((entry) => (
           <li key={entry.id} className="animate-in px-4 py-3 duration-200 fade-in motion-reduce:animate-none">
             <p className="text-[12.5px] text-kbc-muted">{entry.when}</p>
             <p className="text-[15.5px] font-semibold text-kbc-navy">{entry.title}</p>
-            <p className="text-[13.5px] leading-[1.4] text-kbc-muted">{entry.detail}</p>
           </li>
         ))}
       </ol>
 
-      <p className="px-4 pt-5 text-[13px] leading-[1.4] text-kbc-muted">Demo: these settings are simulated and reset when the app reloads.</p>
     </PushedPage>
   )
 }
@@ -246,18 +200,5 @@ export function Switch({ on }: { on: boolean }) {
         )}
       />
     </span>
-  )
-}
-
-function FixedRow({ icon: Icon, label, detail, status }: { icon: LucideIcon; label: string; detail: string; status: ReactNode }) {
-  return (
-    <div className="flex min-h-[64px] items-center gap-4 px-4 py-3">
-      <Icon className="size-[22px] shrink-0 text-kbc-navy" strokeWidth={1.5} />
-      <span className="min-w-0 flex-1">
-        <span className="block text-[16px] text-kbc-navy">{label}</span>
-        <span className="block text-[13.5px] leading-[1.4] text-kbc-muted">{detail}</span>
-      </span>
-      <span className="shrink-0 text-[14px] font-semibold text-kbc-muted">{status}</span>
-    </div>
   )
 }

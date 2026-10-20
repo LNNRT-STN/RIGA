@@ -38,7 +38,7 @@ export const tourSteps: TourStep[] = [
     id: 'home',
     chapter: 'Meet Laura',
     title: 'Meet Laura',
-    body: 'Laura pays the bills for her small company in the KBC Mobile app she already uses.',
+    body: 'Laura pays the bills for her small company.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('home')
@@ -48,7 +48,7 @@ export const tourSteps: TourStep[] = [
     id: 'invoice',
     chapter: 'Check before you pay',
     title: 'A fake Proximus invoice',
-    body: 'Kate blocks this invoice: it comes from a fake Proximus domain, and 37 customers reported its account.',
+    body: 'Kate blocks this invoice.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('invoice-checked')
@@ -58,7 +58,7 @@ export const tourSteps: TourStep[] = [
     id: 'sealed',
     chapter: 'Check before you pay',
     title: 'A sealed invoice',
-    body: 'Proximus sealed this invoice with its own key, so KBC marks it Verified by KBC.',
+    body: 'Proximus sealed this invoice with its own key.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('sealed')
@@ -78,7 +78,7 @@ export const tourSteps: TourStep[] = [
     id: 'call',
     chapter: 'Stop it as it happens',
     title: 'A deepfake CEO call',
-    body: 'KBC Trust spots a deepfake of Laura’s CEO asking for €48,500.00, while the call is still live.',
+    body: 'KBC Trust spots a deepfake of Laura’s CEO asking for €48,500.00.',
     enter: ({ showPortal, later }) => {
       showPortal(null)
       startDemo('call')
@@ -99,7 +99,7 @@ export const tourSteps: TourStep[] = [
     id: 'control',
     chapter: 'Laura stays in control',
     title: 'Laura decides',
-    body: 'Laura chooses what KBC Trust may use, and sees a log of every check it ran.',
+    body: 'Laura chooses what KBC Trust may use.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('control')
@@ -122,6 +122,8 @@ export const tourSteps: TourStep[] = [
     body: 'Kate can’t vouch for zonnigreizen.be, because the company isn’t a KBC partner yet.',
     enter: async ({ showPortal, current }) => {
       showPortal(null)
+      // Back to the default choices, so the document setting from the previous step doesn't show here.
+      startDemo('home')
       await freshPartners()
       if (current()) askKate(zonnigQuestion)
     },
