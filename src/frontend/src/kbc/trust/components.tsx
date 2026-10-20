@@ -1,7 +1,10 @@
 import { useEffect, useId, useState, type ReactNode } from 'react'
 import {
+  BadgeAlert,
+  BadgeCheck,
   Check,
   ChevronDown,
+  FileWarning,
   CircleAlert,
   CircleCheck,
   CircleX,
@@ -14,7 +17,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { checkSteps, type CheckStatus, type TrustLevel, type TrustResult } from './api'
+import { checkSteps, type CheckStatus, type InvoiceSeal, type TrustLevel, type TrustResult } from './api'
 
 type LevelStyle = { label: string; icon: LucideIcon; text: string; bg: string; ring: string }
 
@@ -101,6 +104,7 @@ export function TrustVerdict({
       <div className="px-4 pt-3 pb-4">
         <h3 className="text-[18px] leading-[1.3] font-extrabold text-kbc-navy">{result.headline}</h3>
         <p className="mt-1 text-[15px] leading-[1.45] text-kbc-navy">{result.summary}</p>
+        {result.seal && <SealPanel seal={result.seal} />}
         {actions && <div className="mt-4 flex flex-col gap-2">{actions}</div>}
 
         <button
@@ -161,6 +165,69 @@ export function TrustVerdict({
         </p>
       </div>
     </section>
+  )
+}
+
+/**
+ * The partner's digital seal, shown up front because it is the strongest evidence on the card.
+ * A missing seal stays in the checks list: absence is a signal, not a headline.
+ */
+function SealPanel({ seal }: { seal: InvoiceSeal }) {
+  const partner = seal.partner ?? 'the partner'
+  if (seal.status === 'missing') return null
+
+  if (seal.status === 'valid') {
+    return (
+      <div className="mt-3 flex items-center gap-3 rounded-[8px] bg-kbc-pale px-3 py-[10px]">
+        <BadgeCheck className="size-[22px] shrink-0 text-kbc-green" strokeWidth={1.8} aria-hidden />
+        <p className="min-w-0 leading-tight">
+          <span className="block text-[15px] font-semibold text-kbc-navy">Sealed by {partner}</span>
+          <span className="block text-[13px] text-kbc-muted">
+            {seal.signedOn ? `${seal.signedOn} · ` : ''}Unchanged, checked by KBC
+          </span>
+        </p>
+      </div>
+    )
+  }
+
+  if (seal.status === 'tampered') {
+    return (
+      <div className="mt-3 rounded-[8px] bg-kbc-danger-bg px-3 pt-[10px] pb-2">
+        <p className="flex items-center gap-2 text-[15px] font-bold text-kbc-danger">
+          <FileWarning className="size-[20px] shrink-0" strokeWidth={1.8} aria-hidden />
+          Changed after {partner} sealed it
+        </p>
+        <dl className="mt-1">
+          {seal.mismatches.map((m) => (
+            <div key={m.field} className="border-t border-kbc-danger/15 py-[6px] first:border-t-0">
+              <dt className="text-[12.5px] font-semibold text-kbc-navy/80">{m.field}</dt>
+              <dd className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-[2px] text-[13.5px] tabular-nums">
+                <span className="text-kbc-navy/80">On the invoice</span>
+                <span className="text-right font-semibold break-words text-kbc-danger">{m.printed}</span>
+                <span className="text-kbc-navy/80">{partner} sealed</span>
+                <span className="text-right font-semibold break-words text-kbc-navy">{m.signed}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    )
+  }
+
+  const reason =
+    seal.status === 'revoked'
+      ? { title: 'This seal is no longer valid', detail: `${partner} withdrew the key it was made with.` }
+      : seal.status === 'malformed'
+        ? { title: 'This seal is damaged', detail: 'KBC can’t read it, so it proves nothing.' }
+        : { title: 'This seal is fake', detail: `It was not made by ${seal.partner ?? 'a KBC-verified partner'}.` }
+  return (
+    <div className="mt-3 flex items-center gap-3 rounded-[8px] bg-kbc-danger-bg px-3 py-[10px]">
+      <BadgeAlert className="size-[22px] shrink-0 text-kbc-danger" strokeWidth={1.8} aria-hidden />
+      <p className="min-w-0 leading-tight">
+        <span className="block text-[15px] font-semibold text-kbc-danger">{reason.title}</span>
+        <span className="block text-[13px] text-kbc-navy">{reason.detail}</span>
+      </p>
+    </div>
   )
 }
 

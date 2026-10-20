@@ -49,13 +49,15 @@ All customer data is fictional, and transfers are simulated.
 
 ### KBC Trust demo
 
-`npm run dev` also starts the KBC Trust backend (`src/backend/server.py`, Python 3 standard library, no installs) and proxies `/api` to it. Set `KBC_TRUST_BACKEND=off` to start only the frontend. See [src/backend/README.md](src/backend/README.md) for the endpoints and what is rule based or simulated.
+`npm run dev` also starts the KBC Trust backend (`src/backend/server.py`) and proxies `/api` to it. Run `pip install -r src/backend/requirements.txt` once for the digital invoice seal; without it the backend still runs, with seals off. Set `KBC_TRUST_BACKEND=off` to start only the frontend. See [src/backend/README.md](src/backend/README.md) for the endpoints and what is rule based or simulated.
 
-On a laptop screen, a panel next to the phone starts the three pitch scenarios. Keys work too:
+On a laptop screen, a panel next to the phone starts the pitch scenarios. Keys work too:
 
 - `1` Fake Proximus invoice checked in Kate (sample PDFs in `src/frontend/public/demo/`)
 - `2` Deepfake CEO video call
 - `3` Supplier invoice with a changed account number, stopped in the transfer review
+- `4` Real Proximus invoice with a valid digital seal: "Verified by KBC"
+- `5` Sealed Proximus invoice whose IBAN was changed afterwards: KBC shows what was changed
 - `0` Reset report counts and reload
 
 ### Deploy to Cloud Run

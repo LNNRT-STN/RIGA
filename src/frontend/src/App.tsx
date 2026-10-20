@@ -6,6 +6,8 @@ const scenarios: { id: DemoScenario; key: string; title: string; detail: string 
   { id: 'invoice', key: '1', title: 'Fake invoice', detail: 'Laura checks a Proximus invoice in Kate' },
   { id: 'call', key: '2', title: 'Deepfake CEO call', detail: 'Voice and video check during a call' },
   { id: 'supplier', key: '3', title: 'Supplier account changed', detail: 'Payment stopped before it leaves' },
+  { id: 'sealed', key: '4', title: 'Verified invoice', detail: 'Proximus sealed it, KBC checks the seal' },
+  { id: 'tampered', key: '5', title: 'Sealed invoice changed', detail: 'Looks perfect, but the IBAN was swapped' },
   { id: 'reset', key: '0', title: 'Reset demo', detail: 'Clears reports and reloads' },
 ]
 

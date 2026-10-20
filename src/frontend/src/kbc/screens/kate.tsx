@@ -24,7 +24,8 @@ type NewMessage = Message extends infer M ? (M extends Message ? Omit<M, 'id'> :
 // Plain domains or URLs typed into the chat, such as "proximus-betaling.be" or "https://…".
 const websitePattern = /\b((?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,})(?:\/\S*)?/i
 
-export function KateScreen({ prompt, attach = false }: { prompt?: string; attach?: boolean }) {
+/** `openDocument` checks a demo PDF as soon as Kate opens, for the presenter shortcuts. */
+export function KateScreen({ prompt, attach = false, openDocument }: { prompt?: string; attach?: boolean; openDocument?: string }) {
   const { pop, popToRoot, push, accounts, showToast } = useApp()
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -100,6 +101,15 @@ export function KateScreen({ prompt, attach = false }: { prompt?: string; attach
     // Send the opening prompt once; `send` is intentionally not a dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prompt])
+
+  useEffect(() => {
+    if (openDocument && !sentPrompt.current) {
+      sentPrompt.current = true
+      sendDocument({ sample: openDocument })
+    }
+    // Check the opening document once; `sendDocument` is intentionally not a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openDocument])
 
   const runAction = (action: KateAction) => {
     if (action.action === 'transfer') push({ name: 'transfer' })

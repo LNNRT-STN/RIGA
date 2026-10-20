@@ -1,0 +1,3 @@
+# Only needed for the digital invoice seal (seal.py). Without it, KBC Trust still runs
+# and simply skips the seal check.
+cryptography==50.0.2

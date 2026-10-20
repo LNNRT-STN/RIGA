@@ -5,13 +5,38 @@ Helvetica with WinAnsiEncoding) into src/frontend/public/demo/ so that
 pdf_text.py can read them reliably. All companies, people, IBANs and amounts
 are synthetic. No real logos are used.
 
-Run: python3 src/backend/make_demo_pdfs.py
+Invoices from partners that seal their invoices get a KBC Trust seal (seal.py)
+in the document information dictionary. The demo partners' private keys live in
+src/backend/.demo-keys/, which git ignores; they are created on the first run.
+Their public keys are written to partner_keys.json, which the backend reads.
+Running this without the private keys makes new keys and re-seals every PDF,
+so the PDFs and partner_keys.json always match.
+
+Run: python3 src/backend/make_demo_pdfs.py   (needs: pip install -r src/backend/requirements.txt)
 """
 
+import json
 import os
+import re
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+
+import seal  # noqa: E402
+
 DEMO_DIR = os.path.normpath(os.path.join(HERE, "..", "frontend", "public", "demo"))
+KEYS_DIR = os.path.join(HERE, ".demo-keys")
+KEYS_FILE = os.path.join(HERE, "partner_keys.json")
+
+# SIMULATED: fictional partner signing keys as (key id, partner id, valid from, status).
+# The revoked key shows what happens after a partner withdraws a leaked key.
+KEY_SPECS = [
+    ("proximus-2026-01", "proximus", "2026-03-12", "active"),
+    ("proximus-2025-01", "proximus", "2025-03-01", "revoked"),
+    ("van-damme-2026-01", "van-damme", "2026-06-03", "active"),
+]
 
 PAGE_W, PAGE_H = 595, 842
 MARGIN = 56
@@ -67,8 +92,12 @@ class Page:
         return b"\n".join(self.ops) + b"\n"
 
 
-def write_pdf(path, page, title):
+def write_pdf(path, page, title, seal_token=None):
     content = page.content()
+    info = b"<< /Title %s /Producer (KBC Trust demo generator)" % _pdf_string(title)
+    if seal_token:
+        info += b" /KBCTrustSeal (%s)" % seal_token.encode("ascii")
+    info += b" >>"
     objects = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
         b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
@@ -78,7 +107,7 @@ def write_pdf(path, page, title):
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
         b"<< /Length %d >>\nstream\n" % len(content) + content + b"endstream",
-        b"<< /Title %s /Producer (KBC Trust demo generator) >>" % _pdf_string(title),
+        info,
     ]
     out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
     offsets = []
@@ -161,8 +190,69 @@ def invoice(spec):
            size=9, color=GREY)
     p.text(MARGIN, y - 14, "Website: " + spec["website"] + "    VAT: " + spec["vat_no"],
            size=9, color=GREY)
+    if spec.get("seal_kid"):
+        p.text(MARGIN, 62, "This invoice carries a digital seal. Check it with Kate in KBC Mobile.",
+               size=8, color=GREY)
     p.text(MARGIN, 48, FOOTER, size=8, color=GREY)
     return p
+
+
+def load_or_create_keys():
+    """Return {key id: private key}; write the public keys to partner_keys.json."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+    os.makedirs(KEYS_DIR, exist_ok=True)
+    private, public = {}, []
+    for kid, partner, valid_from, status in KEY_SPECS:
+        path = os.path.join(KEYS_DIR, kid + ".pem")
+        if os.path.exists(path):
+            with open(path, "rb") as fh:
+                key = serialization.load_pem_private_key(fh.read(), password=None)
+        else:
+            key = Ed25519PrivateKey.generate()
+            pem = key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+                                    serialization.NoEncryption())
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "wb") as fh:
+                fh.write(pem)
+        raw = key.public_key().public_bytes(serialization.Encoding.Raw,
+                                            serialization.PublicFormat.Raw)
+        private[kid] = key
+        public.append({"kid": kid, "partner": partner, "x": seal.b64url(raw),
+                       "validFrom": valid_from, "status": status})
+    with open(KEYS_FILE, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump({"_note": "SIMULATED: public keys of fictional demo partners, made by "
+                            "make_demo_pdfs.py.", "keys": public}, fh, indent=2)
+        fh.write("\n")
+    return private
+
+
+def _iso(date):
+    """'30 Oct 2026' to '2026-10-30'."""
+    day, month, year = date.split()
+    return "%s-%02d-%02d" % (year, MONTHS.index(month) + 1, int(day))
+
+
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def seal_for(spec, keys):
+    """The seal the partner makes when it sends the invoice (before anyone changes it)."""
+    kid = spec["seal_kid"]
+    partner = next(p for k, p, _, _ in KEY_SPECS if k == kid)
+    claims = {
+        "v": 1,
+        "iss": partner,
+        "inv": spec["number"],
+        "iban": re.sub(r"\s+", "", spec.get("sealed_iban", spec["iban"])),
+        "amt": re.sub(r"[^\d.]", "", spec["total"]),
+        "cur": "EUR",
+        "due": _iso(spec["due"]),
+        "ref": spec["reference"],
+        "iat": _iso(spec["date"]),
+    }
+    return seal.sign(claims, keys[kid], kid)
 
 
 LAURA = ["Laura Janssens", "Kortrijksesteenweg 112", "9000 Gent", "Belgium"]
@@ -216,6 +306,35 @@ SPECS = {
         "phone": "0800 22 800",
         "website": "www.proximus.be",
         "vat_no": "BE 0202.239.951",
+        "seal_kid": "proximus-2026-01",
+    },
+    # The PERFECT FAKE: a real, sealed Proximus invoice that was intercepted and
+    # changed. Domain, phone and wording are genuine; only the IBAN was swapped.
+    # The rules alone see one wrong IBAN; the seal proves the invoice was altered.
+    "proximus-invoice-november.pdf": {
+        "company": "Proximus",
+        "company_line": "Proximus NV, Koning Albert II-laan 27, 1030 Brussels",
+        "number": "PRX-2026-10-61877",
+        "customer": LAURA,
+        "date": "16 Oct 2026",
+        "due": "15 Nov 2026",
+        "customer_no": "7710 4428",
+        "lines": [("Internet Flex, November 2026", "€44.21"),
+                  ("Mobile Flex, 1 SIM", "€9.10")],
+        "subtotal": "€53.31",
+        "vat": "€11.19",
+        "total": "€64.50",
+        "iban": "BE63 9671 2345 6108",
+        "sealed_iban": "BE38 0000 1234 5672",
+        "bic": "BPOTBEB1",
+        "reference": "+++771/0442/61877+++",
+        "notes": ["Thank you for being a Proximus customer.",
+                  "Please pay by 15 Nov 2026. You can also pay with direct debit."],
+        "email": "noreply@proximus.be",
+        "phone": "0800 22 800",
+        "website": "www.proximus.be",
+        "vat_no": "BE 0202.239.951",
+        "seal_kid": "proximus-2026-01",
     },
     # Business email compromise: real domain, but a new fraudulent IBAN.
     "van-damme-invoice-1043.pdf": {
@@ -248,10 +367,13 @@ SPECS = {
 
 def main():
     os.makedirs(DEMO_DIR, exist_ok=True)
+    keys = load_or_create_keys()
     for name, spec in SPECS.items():
         path = os.path.join(DEMO_DIR, name)
-        write_pdf(path, invoice(spec), spec["company"] + " invoice " + spec["number"])
-        print("wrote", os.path.relpath(path))
+        token = seal_for(spec, keys) if spec.get("seal_kid") else None
+        write_pdf(path, invoice(spec), spec["company"] + " invoice " + spec["number"], token)
+        print("wrote", os.path.relpath(path), "(sealed)" if token else "")
+    print("wrote", os.path.relpath(KEYS_FILE))
 
 
 if __name__ == "__main__":

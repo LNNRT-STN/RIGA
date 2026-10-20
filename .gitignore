@@ -20,3 +20,6 @@ _to_delete/
 
 # Python bytecode
 __pycache__/
+
+# Private keys of the fictional demo partners (make_demo_pdfs.py). Never commit these.
+src/backend/.demo-keys/

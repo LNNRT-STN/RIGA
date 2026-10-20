@@ -42,15 +42,26 @@ function useDemoScenarios() {
       setIncomingCall(false)
       setTab('home')
       popToRoot()
-      if (scenario === 'invoice') push({ name: 'kate', attach: true })
+      // A fresh run id remounts Kate, so pressing a scenario key again starts that scenario over.
+      const runId = Date.now()
+      if (scenario === 'invoice') push({ name: 'kate', attach: true, run: runId })
       if (scenario === 'call') setIncomingCall(true)
       if (scenario === 'supplier') push({ name: 'invoices' })
+      if (scenario === 'sealed') push({ name: 'kate', document: 'proximus-invoice-september.pdf', run: runId })
+      if (scenario === 'tampered') push({ name: 'kate', document: 'proximus-invoice-november.pdf', run: runId })
     }
     const onEvent = (e: Event) => run((e as CustomEvent<DemoScenario>).detail)
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null
       if (target?.closest('input, textarea') || e.metaKey || e.ctrlKey || e.altKey) return
-      const keys: Record<string, DemoScenario> = { '1': 'invoice', '2': 'call', '3': 'supplier', '0': 'reset' }
+      const keys: Record<string, DemoScenario> = {
+        '1': 'invoice',
+        '2': 'call',
+        '3': 'supplier',
+        '4': 'sealed',
+        '5': 'tampered',
+        '0': 'reset',
+      }
       if (keys[e.key]) run(keys[e.key])
     }
     window.addEventListener(demoEvent, onEvent)
@@ -84,7 +95,7 @@ function AppContent() {
           <TransferFab onClick={() => setQuickPayOpen(true)} />
           <TabBar />
           {stack.map((route, i) => (
-            <RouteView key={`${route.name}-${i}`} route={route} />
+            <RouteView key={`${route.name}-${i}-${route.name === 'kate' ? (route.run ?? '') : ''}`} route={route} />
           ))}
           <QuickPaySheet />
           {incomingCall && <IncomingCall />}
@@ -107,7 +118,7 @@ function RouteView({ route }: { route: Route }) {
     case 'account':
       return <AccountScreen accountId={route.accountId} />
     case 'kate':
-      return <KateScreen prompt={route.prompt} attach={route.attach} />
+      return <KateScreen prompt={route.prompt} attach={route.attach} openDocument={route.document} />
     case 'settings':
       return <SettingsScreen />
     case 'messages':

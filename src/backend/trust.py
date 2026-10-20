@@ -19,6 +19,7 @@ import re
 import time
 
 import registry as reg
+import seal as seals
 
 URGENCY_PATTERNS = [
     r"within 24 hours", r"within 48 hours", r"service will be cut",
@@ -96,7 +97,7 @@ def score_of(checks):
 
 def build_result(subject, checks, headline, summary, started, verified_partner=False,
                  extracted=None, contact=None, network=None, score=None,
-                 level=None, decision=None):
+                 level=None, decision=None, seal=None):
     if score is None:
         score = score_of(checks)
     auto_level, auto_decision = band(score)
@@ -116,6 +117,7 @@ def build_result(subject, checks, headline, summary, started, verified_partner=F
         "extracted": extracted or None,
         "verifiedContact": contact,
         "network": network,
+        "seal": seal,
         "elapsedMs": max(1, int(round((time.perf_counter() - started) * 1000))),
     }
 
@@ -229,6 +231,100 @@ def _billed_to_business(text):
     return False
 
 
+def _iso_date(value):
+    """'2026-10-30' to '30 Oct 2026'; anything else is returned as is."""
+    m = re.match(r"^(\d{4})-(\d{2})-(\d{2})$", str(value))
+    if m and 1 <= int(m.group(2)) <= 12:
+        return "%d %s %s" % (int(m.group(3)), MONTHS[int(m.group(2)) - 1], m.group(1))
+    return str(value)
+
+
+def _seal_mismatches(claims, f):
+    """Fields where the printed invoice differs from what the partner sealed."""
+    signed_amount = parse_amount(claims["amt"])
+    printed_amount = parse_amount(f.get("amount"))
+    pairs = [
+        ("IBAN", f.get("iban"), reg.format_iban(claims["iban"]),
+         reg.normalise_iban(f.get("iban")) == reg.normalise_iban(claims["iban"])),
+        ("Amount", f.get("amount"), fmt_eur(signed_amount or 0),
+         printed_amount is not None and signed_amount is not None
+         and abs(printed_amount - signed_amount) < 0.005),
+        ("Invoice number", f.get("number"), str(claims["inv"]), f.get("number") == claims["inv"]),
+        ("Due date", f.get("due"), _iso_date(claims["due"]), f.get("due") == _iso_date(claims["due"])),
+    ]
+    return [{"field": field, "printed": printed, "signed": signed}
+            for field, printed, signed, same in pairs if printed and not same]
+
+
+def _seal_check(tokens, partner, f, iban_ok):
+    """Check the invoice seal. Returns (seal info for the result, check or None, verdict).
+
+    verdict: "valid", "tampered" (sealed, then changed), "fake" (a seal we must not trust),
+    "missing", or None when nothing can be said (no seal from a partner that doesn't seal
+    its invoices, or the crypto library is not installed).
+
+    Proof of a change blocks the payment. So does a missing seal from a partner that seals
+    every invoice when the IBAN is not theirs: that is what removing the seal looks like.
+    """
+    short = partner["shortName"] if partner else None
+    if not tokens:
+        if partner and partner.get("sealsInvoicesSince"):
+            info = {"status": "missing", "partner": partner["name"], "keyId": None,
+                    "signedOn": None, "mismatches": []}
+            detail = "%s has sealed every invoice since %s. This one has no seal" % (
+                short, partner["sealsInvoicesSince"])
+            if iban_ok:
+                return info, check("seal", "No digital seal", "warn", detail + ".", 10), "missing"
+            return info, check("seal", "No digital seal", "fail",
+                               detail + ", and its IBAN is not one of %s's accounts." % short,
+                               50), "missing"
+        return None, None, None
+
+    result = seals.verify(tokens[0]) if len(tokens) == 1 else {
+        "status": "malformed", "kid": None, "partner": None, "claims": None}
+    status = result["status"]
+    if status == "unavailable":
+        return None, None, None
+    sealer = result["partner"]
+    if status in ("valid", "revoked") and sealer is None:
+        status = "unknown-key"  # a key whose partner left the registry
+    info = {"status": status, "partner": sealer["name"] if sealer else None,
+            "keyId": result["kid"], "signedOn": None, "mismatches": []}
+
+    if status == "valid" and sealer is not partner:
+        info["status"] = "invalid"
+        claimed = partner["shortName"] if partner else "another company"
+        return info, check("seal", "Seal is from another company", "fail",
+                           "The seal was made by %s, but the invoice says it is from %s."
+                           % (sealer["shortName"], claimed), 60), "fake"
+    if status == "valid":
+        claims = result["claims"]
+        info["signedOn"] = _iso_date(claims["iat"]) if claims.get("iat") else None
+        info["mismatches"] = _seal_mismatches(claims, f)
+        if info["mismatches"]:
+            info["status"] = "tampered"
+            detail = " ".join("%s sealed %s %s, but the invoice shows %s."
+                              % (short, m["field"] if m["field"] == "IBAN" else m["field"].lower(),
+                                 m["signed"], m["printed"]) for m in info["mismatches"])
+            return info, check("seal", "Changed after it was sealed", "fail", detail, 80), "tampered"
+        return info, check("seal", "Sealed by %s" % short, "pass",
+                           "%s sealed this invoice%s and nothing was changed since. KBC "
+                           "checked the seal with %s's public key."
+                           % (short, " on " + info["signedOn"] if info["signedOn"] else "", short)
+                           ), "valid"
+    label, detail, weight = {
+        "invalid": ("Fake digital seal",
+                    "The seal on this invoice was not made by %s. Someone copied or forged it."
+                    % (short or "a KBC partner"), 60),
+        "revoked": ("Seal key was withdrawn",
+                    "%s withdrew the key used for this seal, so KBC no longer trusts it."
+                    % (sealer["shortName"] if sealer else "The partner"), 50),
+        "unknown-key": ("Unknown digital seal",
+                        "The seal names a key that no KBC-verified partner uses.", 60),
+    }.get(status, ("Damaged digital seal", "The seal on this invoice can't be read.", 50))
+    return info, check("seal", label, "fail", detail, weight), "fake"
+
+
 def unreadable_invoice(started, file_name=None):
     detail = ("We could not find a sender, amount or IBAN in this file. "
               "It may be a scan or a photo.")
@@ -240,7 +336,8 @@ def unreadable_invoice(started, file_name=None):
         score=40, level="review", decision="review")
 
 
-def check_invoice_text(text, started=None, file_name=None):
+def check_invoice_text(text, started=None, file_name=None, seal_tokens=None):
+    """Check an invoice from its text and the KBC Trust seals found in the file."""
     started = started or time.perf_counter()
     f = parse_invoice(text or "")
     if not f.get("company") or not (f.get("iban") or f.get("amount")):
@@ -345,14 +442,32 @@ def check_invoice_text(text, started=None, file_name=None):
         checks.append(check("language", "Normal payment terms", "pass",
                             "No pressure or threats in the text."))
 
+    # 7. Digital seal: proof from the partner itself that it issued exactly this invoice
+    seal_info, seal_check, seal_verdict = _seal_check(seal_tokens or [], partner, f, iban_ok)
+    if seal_check:
+        checks.append(seal_check)
+
     score = score_of(checks)
     level, decision = band(score)
-    verified_partner = bool(partner and domain_ok and iban_ok)
+    verified_partner = bool(partner and domain_ok and iban_ok and seal_verdict in (None, "valid"))
     reports = network["reports"] if network else 0
+    sealer = (seal_info or {}).get("partner") or short
 
-    if verified_partner and level == "verified":
+    if seal_verdict == "tampered":
+        changed = seal_info["mismatches"][0]["field"]
+        headline = "This invoice was changed after it was sealed"
+        summary = "Someone changed the %s after %s sealed it, so don't pay it and call %s on %s." % (
+            "account number" if changed == "IBAN" else changed.lower(), short, short, partner["phone"])
+    elif seal_verdict == "fake":
+        headline = "This invoice has a fake %s seal" % short
+        summary = "The seal was not made by %s, so don't pay it%s." % (
+            short, " and call %s on %s" % (short, partner["phone"]) if partner else "")
+    elif verified_partner and level == "verified":
         headline = "This invoice is really from %s" % short
-        summary = "The sender domain and IBAN match %s's verified details, so it is safe to pay." % short
+        if seal_verdict == "valid":
+            summary = "%s sealed this invoice and KBC checked the seal, so it is safe to pay." % sealer
+        else:
+            summary = "The sender domain and IBAN match %s's verified details, so it is safe to pay." % short
     elif partner and domain_ok is False:
         headline = "This invoice is not from %s" % short
         reason = "It comes from %s, not %s" % (domain, partner["domains"][0])
@@ -384,7 +499,7 @@ def check_invoice_text(text, started=None, file_name=None):
 
     return build_result("invoice", checks, headline, summary, started,
                         verified_partner=verified_partner, extracted=extracted,
-                        contact=contact, network=network)
+                        contact=contact, network=network, seal=seal_info)
 
 
 # --------------------------------------------------------------------------

@@ -10,15 +10,20 @@ other real system. The registry stands in for what KBC would know about:
   as scams (mutable in memory, reset with ``reset()``).
 * Account facts that a bank can see for its own or SEPA accounts (holder name
   for Verification of Payee, account age).
+* Partner public keys that check the digital seal on their invoices
+  (partner_keys.json, see seal.py).
 * People enrolled with KBC Trust for call verification.
 * Payment history per demo account.
 """
 
 import copy
+import json
+import os
 import re
 import threading
 
 TODAY = "20 Oct 2026"
+KEYS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "partner_keys.json")
 
 _LOCK = threading.Lock()
 
@@ -66,6 +71,7 @@ PARTNERS = [
         "phone": "0800 22 800",
         "website": "proximus.be",
         "verifiedSince": "12 Mar 2026",
+        "sealsInvoicesSince": "12 Mar 2026",
         "category": "telecom",
     },
     {
@@ -78,6 +84,7 @@ PARTNERS = [
         "phone": "+32 9 225 41 10",
         "website": "vandamme-packaging.be",
         "verifiedSince": "3 Jun 2026",
+        "sealsInvoicesSince": "3 Jun 2026",
         "category": "packaging supplier",
     },
     {
@@ -161,6 +168,34 @@ PEOPLE = [
 _reports = copy.deepcopy(_DEFAULT_REPORTS)
 
 
+def load_seal_keys(path=KEYS_FILE):
+    """Partner public keys for invoice seals, keyed by key id (see seal.py).
+
+    Each entry: {"kid", "partner", "x" (base64url Ed25519 public key), "validFrom", "status"}.
+    SIMULATED: fictional demo keys written by make_demo_pdfs.py.
+    """
+    try:
+        with open(path, encoding="utf-8") as fh:
+            keys = json.load(fh).get("keys", [])
+    except (OSError, ValueError):
+        return {}
+    return {k["kid"]: k for k in keys if isinstance(k, dict) and k.get("kid")}
+
+
+SEAL_KEYS = load_seal_keys()
+
+
+def seal_key(kid):
+    return SEAL_KEYS.get(kid)
+
+
+def public_keys():
+    """Public keys in JWK form (RFC 8037), so any partner or bank can read the format."""
+    return [{"kty": "OKP", "crv": "Ed25519", "alg": "EdDSA", "use": "sig", "kid": k["kid"],
+             "x": k["x"], "partner": k["partner"], "validFrom": k["validFrom"],
+             "status": k["status"]} for k in SEAL_KEYS.values()]
+
+
 def reset():
     """Restore the in-memory report counts to their defaults."""
     global _reports
@@ -227,6 +262,13 @@ def find_partner_in_text(text):
             if match and (best_pos is None or match.start() < best_pos):
                 best, best_pos = partner, match.start()
     return best
+
+
+def find_partner_by_id(partner_id):
+    for partner in PARTNERS:
+        if partner["id"] == partner_id:
+            return partner
+    return None
 
 
 def find_partner_by_domain(domain):
