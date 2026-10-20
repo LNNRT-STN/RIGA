@@ -17,7 +17,7 @@ import { TabBar } from './ui'
 import { resetDemo } from './trust/api'
 import { defaultTrustControls } from './trust/controls'
 
-import { demoEvent, type DemoScenario } from './demo'
+import { demoEvent, kateEvent, type DemoScenario } from './demo'
 
 /** The KBC Mobile replica. Renders inside any sized, position:relative container. */
 export function KbcApp() {
@@ -66,6 +66,15 @@ function useDemoScenarios() {
       if (scenario === 'tampered') push({ name: 'kate', document: 'proximus-invoice-november.pdf', run: runId })
     }
     const onEvent = (e: Event) => run((e as CustomEvent<DemoScenario>).detail)
+    const onKate = (e: Event) => {
+      const prompt = (e as CustomEvent<string>).detail
+      logIn()
+      setIncomingCall(false)
+      setTab('home')
+      popToRoot()
+      // Push on the next frame so an open Kate screen remounts and sends the new question.
+      window.setTimeout(() => push({ name: 'kate', prompt }), 60)
+    }
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null
       if (target?.closest('input, textarea') || e.metaKey || e.ctrlKey || e.altKey) return
@@ -82,9 +91,11 @@ function useDemoScenarios() {
       if (keys[e.key]) run(keys[e.key])
     }
     window.addEventListener(demoEvent, onEvent)
+    window.addEventListener(kateEvent, onKate)
     window.addEventListener('keydown', onKey)
     return () => {
       window.removeEventListener(demoEvent, onEvent)
+      window.removeEventListener(kateEvent, onKate)
       window.removeEventListener('keydown', onKey)
     }
   }, [logIn, setTab, popToRoot, push, setIncomingCall, setTrustControls, logActivity])

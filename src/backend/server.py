@@ -21,6 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
+import partners  # noqa: E402
 import pdf_text  # noqa: E402
 import registry as reg  # noqa: E402
 import seal  # noqa: E402
@@ -33,10 +34,11 @@ REPORT_MESSAGE = "Thanks. Every KBC customer is now warned before paying this ac
 
 
 class ApiError(Exception):
-    def __init__(self, status, message):
+    def __init__(self, status, message, fields=None):
         super().__init__(message)
         self.status = status
         self.message = message
+        self.fields = fields or {}
 
 
 def demo_samples():
@@ -117,7 +119,20 @@ def report_endpoint(body):
 
 def reset_endpoint(_body):
     reg.reset()
+    partners.reset()
     return {"ok": True}
+
+
+def partner_lookup_endpoint(body):
+    return partners.lookup(body.get("enterpriseNumber"))
+
+
+def partner_dns_endpoint(body):
+    return partners.dns_records(body.get("enterpriseNumber"), body.get("domains"))
+
+
+def partner_apply_endpoint(body):
+    return partners.apply(body)
 
 
 POST_ROUTES = {
@@ -127,6 +142,9 @@ POST_ROUTES = {
     "/api/trust/website": website_endpoint,
     "/api/trust/report": report_endpoint,
     "/api/demo/reset": reset_endpoint,
+    "/api/partners/lookup": partner_lookup_endpoint,
+    "/api/partners/dns": partner_dns_endpoint,
+    "/api/partners/apply": partner_apply_endpoint,
 }
 
 
@@ -159,6 +177,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self._path() == "/api/health":
             self._send(200, {"ok": True})
+        elif self._path() == "/api/partners":
+            self._send(200, partners.directory())
         elif self._path() == "/api/trust/keys":
             # Partner public keys for invoice seals, as a JWK set (RFC 7517 and 8037).
             self._send(200, {"keys": reg.public_keys()})
@@ -201,8 +221,11 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(body, dict):
                 raise ApiError(400, "JSON body must be an object")
             self._send(200, route(body))
-        except ApiError as err:
-            self._send(err.status, {"error": err.message})
+        except (ApiError, partners.OnboardingError) as err:
+            payload = {"error": err.message}
+            if err.fields:
+                payload["fields"] = err.fields
+            self._send(err.status, payload)
         except Exception as err:  # keep the demo alive and say what broke
             self._send(500, {"error": "Internal error: %s" % err})
 

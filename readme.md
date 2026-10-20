@@ -60,7 +60,9 @@ On a laptop screen, a panel next to the phone starts the pitch scenarios. Keys w
 - `5` Kate asks first: document checks are switched off, so Kate asks before she reads the invoice
 - `6` Real Proximus invoice with a valid digital seal: "Verified by KBC"
 - `7` Sealed Proximus invoice whose IBAN was changed afterwards: KBC shows what was changed
-- `0` Reset report counts and reload
+- `8` Partner sign-up: a company becomes Verified by KBC in a portal next to the phone (`#partners` in the URL opens it directly)
+- `9` Ask Kate "Is zonnigreizen.be real?", before and after the partner signs up
+- `0` Reset report counts and partners added through sign-up, and reload
 
 Every scenario starts from the default KBC Trust settings, so a setting changed while showing customer control can't change the next scenario. The same controls are in the app under **MyTrust** on Home, **Settings > What you share with KBC Trust**, the line under Kate's greeting, and the note under every verdict.
 
