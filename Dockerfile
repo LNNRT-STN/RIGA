@@ -20,5 +20,8 @@ ENV HOST=0.0.0.0 \
     STATIC_DIR=/app/static \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
+# Run as an unprivileged user so a compromised app does not get root in the container.
+RUN useradd -U -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
 EXPOSE 8080
 CMD ["python3", "src/backend/server.py"]
