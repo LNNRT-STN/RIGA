@@ -45,26 +45,6 @@ export const tourSteps: TourStep[] = [
     },
   },
   {
-    id: 'sealed',
-    chapter: 'Check before you pay',
-    title: 'A sealed invoice',
-    body: 'Proximus sealed this invoice with its own key.',
-    enter: ({ showPortal }) => {
-      showPortal(null)
-      startDemo('sealed')
-    },
-  },
-  {
-    id: 'tampered',
-    chapter: 'Check before you pay',
-    title: 'Changed after sealing',
-    body: 'Someone swapped the account number after sealing, and KBC shows exactly what changed.',
-    enter: ({ showPortal }) => {
-      showPortal(null)
-      startDemo('tampered')
-    },
-  },
-  {
     id: 'call',
     chapter: 'Stop it as it happens',
     title: 'A deepfake CEO call',
