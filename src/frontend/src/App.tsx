@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { IPhoneFrame } from '@/components/device/iphone-frame'
 import { cn } from '@/lib/utils'
 import { askKate, startDemo, type DemoScenario } from '@/kbc/demo'
 import { KbcApp } from '@/kbc/kbc-app'
-import { PartnerPortal } from '@/partners/portal'
+import { PartnerPortal, type PortalTourAction } from '@/partners/portal'
+import { GuidedTour, TourButton } from '@/tour/guided-tour'
+import { rememberTourClosed, tourWasClosed } from '@/tour/storage'
 
 type Shortcut = { key: string; title: string; detail: string; run: () => void }
 
@@ -11,6 +13,13 @@ const portalHash = '#partners'
 
 function App() {
   const [portalOpen, setPortalOpen] = useState(() => window.location.hash === portalHash)
+  // First visitors get the guided tour; a presenter who closed it, or opened #partners, does not.
+  const [tourOpen, setTourOpen] = useState(() => window.location.hash !== portalHash && !tourWasClosed())
+  const [tourIndex, setTourIndex] = useState(0)
+  const [portalAction, setPortalAction] = useState<PortalTourAction>()
+  const portalActionId = useRef(0)
+  const [tourCardHeight, setTourCardHeight] = useState(0)
+  const reserve = tourOpen ? tourCardHeight : 0
 
   const showPortal = (open: boolean) => {
     setPortalOpen(open)
@@ -30,6 +39,26 @@ function App() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
+
+  const tourContext = {
+    showPortal: (action: 'fill' | 'submit' | null) => {
+      if (action) setPortalAction({ kind: action, id: ++portalActionId.current })
+      showPortal(action !== null)
+    },
+    // The tour column, the portal and the phone fit next to each other from 1280px.
+    roomForBoth: () => window.matchMedia('(min-width: 1280px)').matches,
+  }
+  const closeTour = () => {
+    setTourOpen(false)
+    // Give the portal its own demo shortcuts back.
+    setPortalAction(undefined)
+    rememberTourClosed(true)
+  }
+  const openTour = () => {
+    setTourIndex(0)
+    setTourOpen(true)
+    rememberTourClosed(false)
+  }
 
   const scenario = (id: DemoScenario) => () => startDemo(id)
   const shortcuts: Shortcut[] = [
@@ -52,16 +81,26 @@ function App() {
         'flex min-h-dvh items-center justify-center gap-6 bg-[radial-gradient(ellipse_at_50%_35%,#ffffff_0%,#eef3f7_55%,#e2e9ef_100%)] p-6',
         portalOpen && 'h-dvh',
       )}
+      // Below 1024px the tour card floats at the bottom; keep the phone and portal clear of it.
+      style={reserve ? { paddingBottom: reserve + 12 } : undefined}
     >
       <h1 className="sr-only">KBC Mobile prototype</h1>
-      {!portalOpen && <PresenterPanel shortcuts={shortcuts} />}
+      {tourOpen ? (
+        <GuidedTour index={tourIndex} onIndex={setTourIndex} onClose={closeTour} context={tourContext} onCardHeight={setTourCardHeight} />
+      ) : (
+        <>
+          {!portalOpen && <PresenterPanel shortcuts={shortcuts} />}
+          <TourButton onClick={openTour} />
+        </>
+      )}
       {portalOpen && (
         <div className="h-full max-w-[1120px] min-w-0 flex-1">
-          <PartnerPortal onClose={() => showPortal(false)} />
+          <PartnerPortal onClose={() => showPortal(false)} tourAction={portalAction} />
         </div>
       )}
-      <div className={cn(portalOpen && 'hidden lg:block')}>
-        <IPhoneFrame>
+      {/* With the tour open there is room for the portal and the phone together only from 1280px. */}
+      <div className={cn(portalOpen && (tourOpen ? 'hidden xl:block' : 'hidden lg:block'))}>
+        <IPhoneFrame reserveBottom={reserve}>
           <KbcApp />
         </IPhoneFrame>
       </div>

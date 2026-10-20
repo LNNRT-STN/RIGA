@@ -86,7 +86,10 @@ const emptyApplication: Application = {
  * "KBC Trust for partners": a company signs up to become Verified by KBC. Shown next to the phone in
  * the demo, so the audience sees the customer's Kate answer change the moment the company goes live.
  */
-export function PartnerPortal({ onClose }: { onClose: () => void }) {
+/** What the guided tour asks the portal to show: the demo company filled in, or its finished sign-up. */
+export type PortalTourAction = { kind: 'fill' | 'submit'; id: number }
+
+export function PartnerPortal({ onClose, tourAction }: { onClose: () => void; tourAction?: PortalTourAction }) {
   const [directory, setDirectory] = useState<Directory | null>(null)
   const [step, setStep] = useState<Step>('intro')
   const [form, setForm] = useState<Application>(emptyApplication)
@@ -115,7 +118,7 @@ export function PartnerPortal({ onClose }: { onClose: () => void }) {
     })
   }
 
-  const lookup = async (enterpriseNumber: string, preset?: Partial<Application>) => {
+  const lookup = async (enterpriseNumber: string, preset?: Partial<Application>): Promise<Application | null> => {
     setBusy(true)
     setNotice(null)
     setErrors({})
@@ -123,16 +126,19 @@ export function PartnerPortal({ onClose }: { onClose: () => void }) {
     try {
       const found = await lookupCompany(enterpriseNumber)
       setCompany(found.company)
-      setForm({
+      const filled = {
         ...emptyApplication,
         enterpriseNumber: found.company.enterpriseNumber,
         modules: availableModules,
         ...(found.suggested ?? {}),
         ...(preset ?? {}),
-      })
+      }
+      setForm(filled)
+      return filled
     } catch (error) {
       if (error instanceof PartnerApiError && error.fields.enterpriseNumber) setErrors(error.fields)
       else setNotice(error instanceof Error ? error.message : 'Something went wrong. Try again.')
+      return null
     } finally {
       setBusy(false)
     }
@@ -143,16 +149,16 @@ export function PartnerPortal({ onClose }: { onClose: () => void }) {
     setResult(null)
     setStep('company')
     setForm({ ...emptyApplication, enterpriseNumber: preset.enterpriseNumber })
-    void lookup(preset.enterpriseNumber, 'application' in preset ? { ...preset.application, domains: [...preset.application.domains], ibans: [...preset.application.ibans] } : undefined)
+    return lookup(preset.enterpriseNumber, 'application' in preset ? { ...preset.application, domains: [...preset.application.domains], ibans: [...preset.application.ibans] } : undefined)
   }
 
-  const submit = async () => {
+  const submit = async (application: Application = form) => {
     setBusy(true)
     setNotice(null)
     setStep('result')
     setResult(null)
     try {
-      const outcome = await applyAsPartner(form)
+      const outcome = await applyAsPartner(application)
       setResult(outcome)
       if (outcome.decision === 'approved') void refreshDirectory()
     } catch (error) {
@@ -168,6 +174,16 @@ export function PartnerPortal({ onClose }: { onClose: () => void }) {
       setBusy(false)
     }
   }
+
+  // The tour resets the backend before each partner step, so both actions start from a fresh company.
+  useEffect(() => {
+    if (!tourAction) return
+    void fillDemo('genuine').then((filled) => {
+      if (filled && tourAction.kind === 'submit') void submit(filled)
+    })
+    // Run once per tour action; the helpers are intentionally not dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tourAction?.id])
 
   const startOver = () => {
     setStep('intro')
@@ -189,7 +205,8 @@ export function PartnerPortal({ onClose }: { onClose: () => void }) {
           <span>Trust for partners</span>
         </p>
         <div className="ml-auto flex min-w-0 items-center gap-2">
-          <DemoMenu onFill={fillDemo} />
+          {/* The tour fills in the demo company itself, so its shortcuts would only crowd the header. */}
+          {!tourAction && <DemoMenu onFill={fillDemo} />}
           <button
             type="button"
             onClick={onClose}
@@ -202,7 +219,13 @@ export function PartnerPortal({ onClose }: { onClose: () => void }) {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <aside className="no-scrollbar hidden w-[256px] shrink-0 flex-col gap-8 overflow-y-auto border-r border-kbc-line bg-kbc-pale px-5 py-7 md:flex">
+        <aside
+          className={cn(
+            'no-scrollbar hidden w-[256px] shrink-0 flex-col gap-8 overflow-y-auto border-r border-kbc-line bg-kbc-pale px-5 py-7',
+            // Next to the tour column the form needs the room below 1280px.
+            tourAction ? 'xl:flex' : 'md:flex',
+          )}
+        >
           <nav aria-label="Sign-up steps">
             <ol className="flex flex-col gap-1">
               {steps.map((s, i) => {
@@ -268,7 +291,7 @@ export function PartnerPortal({ onClose }: { onClose: () => void }) {
           )}
           {step === 'result' &&
             (result ? (
-              <ResultView result={result} form={form} onEdit={() => setStep('proof')} onStartOver={startOver} />
+              <ResultView result={result} form={form} onEdit={() => setStep('proof')} onStartOver={startOver} showApi={!tourAction} />
             ) : (
               <Verifying />
             ))}
@@ -666,7 +689,19 @@ const decisionStyles: Record<ApplyResult['decision'], { icon: LucideIcon; label:
   rejected: { icon: ShieldX, label: 'Not verified', band: 'bg-kbc-danger-bg', text: 'text-kbc-danger' },
 }
 
-function ResultView({ result, form, onEdit, onStartOver }: { result: ApplyResult; form: Application; onEdit: () => void; onStartOver: () => void }) {
+function ResultView({
+  result,
+  form,
+  onEdit,
+  onStartOver,
+  showApi,
+}: {
+  result: ApplyResult
+  form: Application
+  onEdit: () => void
+  onStartOver: () => void
+  showApi: boolean
+}) {
   const style = decisionStyles[result.decision]
   const Icon = style.icon
   const open = result.checks.filter((c) => c.status !== 'pass')
@@ -700,7 +735,7 @@ function ResultView({ result, form, onEdit, onStartOver }: { result: ApplyResult
         {result.decision === 'approved' && <AllChecks checks={result.checks} />}
       </div>
 
-      {result.decision === 'approved' && result.apiKey && <ApiPanel apiKey={result.apiKey} website={website} />}
+      {showApi && result.decision === 'approved' && result.apiKey && <ApiPanel apiKey={result.apiKey} website={website} />}
     </div>
   )
 }

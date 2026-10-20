@@ -17,6 +17,7 @@ import { TabBar } from './ui'
 import { resetDemo } from './trust/api'
 import { defaultTrustControls } from './trust/controls'
 
+import { invoicesToPay } from './data'
 import { demoEvent, kateEvent, type DemoScenario } from './demo'
 
 /** The KBC Mobile replica. Renders inside any sized, position:relative container. */
@@ -50,17 +51,35 @@ function useDemoScenarios() {
       // A fresh run id remounts Kate, so pressing a scenario key again starts that scenario over.
       const runId = Date.now()
       if (scenario === 'invoice') push({ name: 'kate', attach: true, run: runId })
+      // The guided tour skips the taps: Kate checks the fake invoice, and the transfer opens on its review.
+      if (scenario === 'invoice-checked') push({ name: 'kate', document: 'proximus-invoice-october.pdf', run: runId })
       if (scenario === 'call') setIncomingCall(true)
-      if (scenario === 'supplier') push({ name: 'invoices' })
+      if (scenario === 'supplier' || scenario === 'supplier-review') push({ name: 'invoices' })
+      if (scenario === 'supplier-review') {
+        const invoice = invoicesToPay[0]
+        push({
+          name: 'transfer',
+          review: true,
+          prefill: {
+            fromId: invoice.accountId,
+            name: invoice.supplier,
+            iban: invoice.iban,
+            amount: invoice.amount.toFixed(2),
+            message: invoice.reference,
+          },
+        })
+      }
       if (scenario === 'control') {
         push({ name: 'trust' })
         push({ name: 'trust-data' })
       }
-      if (scenario === 'consent') {
+      if (scenario === 'consent' || scenario === 'consent-asked') {
         // Document checks off, then the Proximus invoice: Kate asks before she reads it.
         setTrustControls((prev) => ({ ...prev, data: { ...prev.data, documents: false } }))
         logActivity('You switched off documents', 'KBC Trust no longer uses your documents. Kate asks first.')
-        push({ name: 'kate', attach: true, run: runId })
+        // The guided tour picks the October invoice itself, so Kate's question shows straight away.
+        if (scenario === 'consent') push({ name: 'kate', attach: true, run: runId })
+        else push({ name: 'kate', document: 'proximus-invoice-october.pdf', run: runId })
       }
       if (scenario === 'sealed') push({ name: 'kate', document: 'proximus-invoice-september.pdf', run: runId })
       if (scenario === 'tampered') push({ name: 'kate', document: 'proximus-invoice-november.pdf', run: runId })
@@ -152,7 +171,7 @@ function RouteView({ route }: { route: Route }) {
     case 'messages':
       return <MessagesScreen />
     case 'transfer':
-      return <TransferScreen beneficiaryId={route.beneficiaryId} prefill={route.prefill} />
+      return <TransferScreen beneficiaryId={route.beneficiaryId} prefill={route.prefill} startInReview={route.review} />
     case 'trust':
       return <TrustScreen />
     case 'trust-data':

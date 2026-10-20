@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { LoaderCircle, Phone, PhoneOff, ShieldOff, ShieldX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { business } from '../data'
+import { answerCallEvent } from '../demo'
 import { useApp } from '../store'
 import { checkCall, reportScam, type TrustResult } from '../trust/api'
 import { SecondaryAction, TrustVerdict, VerifiedContactButton } from '../trust/components'
@@ -46,6 +47,13 @@ export function IncomingCall() {
     setTrustControls((prev) => ({ ...prev, data: { ...prev.data, calls: true } }))
     logActivity('You switched on calls', 'KBC Trust may use your calls again.')
   }
+
+  // The guided tour answers the call for the visitor.
+  useEffect(() => {
+    const onAnswer = () => setStage((prev) => (prev === 'ringing' ? 'live' : prev))
+    window.addEventListener(answerCallEvent, onAnswer)
+    return () => window.removeEventListener(answerCallEvent, onAnswer)
+  }, [])
 
   useEffect(() => {
     if (stage !== 'live') return

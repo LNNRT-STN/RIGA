@@ -36,13 +36,12 @@ const websitePattern = /\b((?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,})(?:\/\S*)?
 /** `openDocument` checks a demo PDF as soon as Kate opens, for the presenter shortcuts. */
 export function KateScreen({ prompt, attach = false, openDocument }: { prompt?: string; attach?: boolean; openDocument?: string }) {
   const { pop, popToRoot, push, accounts, showToast, trustControls, setTrustControls, logActivity } = useApp()
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 0,
-      from: 'kate',
-      text: `Hello ${customer.firstName}. 👋 I’m Kate. Nice to see you here! How can I help you today?`,
-    },
-  ])
+  // Opened with a question or a document, Kate goes straight to the answer.
+  const [messages, setMessages] = useState<Message[]>(() =>
+    prompt || openDocument
+      ? []
+      : [{ id: 0, from: 'kate', text: `Hello ${customer.firstName}. 👋 I’m Kate. Nice to see you here! How can I help you today?` }],
+  )
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(attach)
@@ -171,8 +170,7 @@ export function KateScreen({ prompt, attach = false, openDocument }: { prompt?: 
 
       <div ref={scrollRef} className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-3">
         <div className="flex-1" />
-        <p className="pt-6 text-center text-[13.5px] font-semibold text-kbc-navy">Today</p>
-        <p className="text-center text-[13.5px] text-kbc-link">Ask Kate, your AI assistant</p>
+        <p className="pt-6 pb-4 text-center text-[13.5px] text-kbc-link">Ask Kate, your AI assistant</p>
         <DataScopeLine />
         <ul className="flex flex-col gap-4" aria-live="polite">
           {messages.map((m) =>
@@ -425,12 +423,14 @@ function AttachSheet({ onClose, onPick }: { onClose: () => void; onPick: (source
 function DataScopeLine() {
   const { trustControls, push } = useApp()
   const allowed = dataTypes.filter((d) => trustControls.data[d.key]).map((d) => d.short)
+  // Only worth a line when the customer limited what Kate may use.
+  if (allowed.length === dataTypes.length) return null
   const list =
     allowed.length === 0
       ? 'Kate uses only what you type'
       : `Kate may check your ${allowed.length > 1 ? `${allowed.slice(0, -1).join(', ')} and ${allowed.at(-1)}` : allowed[0]}`
   return (
-    <p className="pt-2 pb-6 text-center">
+    <p className="pb-6 text-center">
       <button
         type="button"
         onClick={() => push({ name: 'trust-data' })}

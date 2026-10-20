@@ -9,7 +9,6 @@ import {
   CircleCheck,
   CircleX,
   LoaderCircle,
-  LockKeyhole,
   Phone,
   ShieldAlert,
   ShieldCheck,
@@ -73,13 +72,11 @@ const statusIcons: Record<CheckStatus, { icon: LucideIcon; className: string; la
 export function TrustVerdict({
   result,
   actions,
-  footer,
   onManageData,
   className,
 }: {
   result: TrustResult
   actions?: ReactNode
-  footer?: ReactNode
   /** Opens "What you share". Leave out where the customer can't leave the flow, such as during a call. */
   onManageData?: () => void
   className?: string
@@ -96,11 +93,9 @@ export function TrustVerdict({
     >
       <div className={cn('flex items-center gap-3 px-4 py-3', style.bg)}>
         <Icon className={cn('size-[26px] shrink-0', style.text)} strokeWidth={1.8} />
-        <p className={cn('min-w-0 flex-1 text-[15px] leading-tight font-bold', style.text)}>
-          {levelLabel(result)}
-          <span className="block text-[12.5px] font-semibold opacity-80">KBC Trust score</span>
-        </p>
+        <p className={cn('min-w-0 flex-1 text-[15px] leading-tight font-bold', style.text)}>{levelLabel(result)}</p>
         <p className={cn('shrink-0 text-right leading-none tabular-nums', style.text)}>
+          <span className="sr-only">KBC Trust score </span>
           <span className="text-[30px] font-extrabold tracking-[-0.02em]">{result.score}</span>
           <span className="text-[14px] font-bold opacity-70">/100</span>
         </p>
@@ -108,7 +103,6 @@ export function TrustVerdict({
 
       <div className="px-4 pt-3 pb-4">
         <h3 className="text-[18px] leading-[1.3] font-extrabold text-kbc-navy">{result.headline}</h3>
-        <p className="mt-1 text-[15px] leading-[1.45] text-kbc-navy">{result.summary}</p>
         {result.seal && <SealPanel seal={result.seal} />}
         {actions && <div className="mt-4 flex flex-col gap-2">{actions}</div>}
 
@@ -119,12 +113,13 @@ export function TrustVerdict({
           onClick={() => setOpen((v) => !v)}
           className="mt-3 -ml-1 flex h-[40px] items-center gap-1 px-1 text-[14.5px] font-bold text-kbc-link"
         >
-          {open ? 'Hide details' : `Why? See ${result.checks.length} checks`}
+          {open ? 'Hide details' : 'Why?'}
           <ChevronDown className={cn('size-[18px] transition-transform duration-200', open && 'rotate-180')} strokeWidth={2} />
         </button>
 
         {open && (
           <div id={detailsId} className="animate-in duration-200 fade-in slide-in-from-top-1 motion-reduce:animate-none">
+            <p className="pb-3 text-[15px] leading-[1.45] text-kbc-navy">{result.summary}</p>
             <ul className="divide-y divide-kbc-line border-t border-kbc-line">
               {result.checks.map((check) => {
                 const status = statusIcons[check.status]
@@ -161,14 +156,10 @@ export function TrustVerdict({
                 every other KBC customer before they pay.
               </p>
             )}
+            <DataUsedNote subject={result.subject} onManage={onManageData} />
           </div>
         )}
 
-        <p className="mt-2 text-[12.5px] text-kbc-muted">
-          Answered in {(result.elapsedMs / 1000).toFixed(1)} s by KBC Trust
-          {footer}
-        </p>
-        <DataUsedNote subject={result.subject} onManage={onManageData} />
       </div>
     </section>
   )
@@ -241,8 +232,7 @@ function SealPanel({ seal }: { seal: InvoiceSeal }) {
 export function DataUsedNote({ subject, onManage }: { subject: TrustResult['subject']; onManage?: () => void }) {
   const { used, kept } = dataUse(subject)
   return (
-    <p className="mt-1 flex items-start gap-[6px] text-[12.5px] leading-[1.45] text-kbc-muted">
-      <LockKeyhole className="mt-[2px] size-[13px] shrink-0" strokeWidth={2} aria-hidden />
+    <p className="mt-3 text-[13px] leading-[1.45] text-kbc-muted">
       <span>
         Used {used}. {kept}{' '}
         {onManage && (

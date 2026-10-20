@@ -51,6 +51,8 @@ All customer data is fictional, and transfers are simulated.
 
 `npm run dev` also starts the KBC Trust backend (`src/backend/server.py`) and proxies `/api` to it. Run `pip install -r src/backend/requirements.txt` once for the digital invoice seal; without it the backend still runs, with seals off. Set `KBC_TRUST_BACKEND=off` to start only the frontend. See [src/backend/README.md](src/backend/README.md) for the endpoints and what is rule based or simulated.
 
+A first visit opens a guided tour next to the phone: 12 short steps, about 3 minutes. The tour drives the app and the partner portal, so a visitor only presses Next (or the arrow keys) and never types anything. Closing it is remembered in the browser; the **Guided tour** button brings it back, and `?tour` in the URL always opens it. The steps live in `src/frontend/src/tour/steps.ts`.
+
 On a laptop screen, a panel next to the phone starts the pitch scenarios. Keys work too:
 
 - `1` Fake Proximus invoice checked in Kate (sample PDFs in `src/frontend/public/demo/`)

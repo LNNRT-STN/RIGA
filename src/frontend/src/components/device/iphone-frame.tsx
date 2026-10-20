@@ -16,15 +16,14 @@ export function useDevice() {
   return useContext(DeviceContext)
 }
 
-function useFitScale(margin: number) {
-  const compute = () =>
-    Math.min(1, (window.innerHeight - margin * 2) / FRAME_H, (window.innerWidth - margin * 2) / FRAME_W)
-  const [scale, setScale] = useState(compute)
+function useFitScale(margin: number, reserveBottom: number) {
+  const [viewport, setViewport] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }))
   useEffect(() => {
-    const onResize = () => setScale(compute())
+    const onResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight })
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
-  })
+  }, [])
+  const scale = Math.min(1, (viewport.height - margin * 2 - reserveBottom) / FRAME_H, (viewport.width - margin * 2) / FRAME_W)
   return Math.max(scale, 0.4)
 }
 
@@ -43,9 +42,10 @@ function useIsPhone() {
 /**
  * Renders children inside a scaled iPhone mockup. On a real phone the frame is dropped and the
  * app fills the viewport, so the same build works for projector demos and hands-on demos.
+ * `reserveBottom` keeps that many pixels free at the bottom, for the guided tour's card.
  */
-export function IPhoneFrame({ children }: { children: ReactNode }) {
-  const scale = useFitScale(24)
+export function IPhoneFrame({ children, reserveBottom = 0 }: { children: ReactNode; reserveBottom?: number }) {
+  const scale = useFitScale(24, reserveBottom)
   const isPhone = useIsPhone()
 
   if (isPhone) {
@@ -55,8 +55,9 @@ export function IPhoneFrame({ children }: { children: ReactNode }) {
           className="fixed inset-0 overflow-hidden bg-white"
           style={
             {
+              bottom: reserveBottom,
               '--safe-top': 'env(safe-area-inset-top, 0px)',
-              '--safe-bottom': 'env(safe-area-inset-bottom, 0px)',
+              '--safe-bottom': reserveBottom ? '0px' : 'env(safe-area-inset-bottom, 0px)',
             } as CSSProperties
           }
         >
