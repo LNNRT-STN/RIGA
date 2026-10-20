@@ -1,7 +1,9 @@
 """KBC Trust demo API, Python standard library only.
 
 Run from anywhere:  python3 src/backend/server.py
-Port: env KBC_TRUST_PORT (default 8787), bound to 127.0.0.1.
+Port: env PORT (set by Cloud Run) or KBC_TRUST_PORT (default 8787). Host: env HOST
+(default 127.0.0.1; the Docker image uses 0.0.0.0). With STATIC_DIR set, it also serves
+the built frontend from that folder, so one container runs the whole demo.
 
 All partner, account and detector data is SIMULATED (see registry.py).
 """
@@ -9,6 +11,7 @@ All partner, account and detector data is SIMULATED (see registry.py).
 import base64
 import binascii
 import json
+import mimetypes
 import os
 import sys
 import time
@@ -23,6 +26,7 @@ import registry as reg  # noqa: E402
 import trust  # noqa: E402
 
 DEMO_DIR = os.path.normpath(os.path.join(HERE, "..", "frontend", "public", "demo"))
+STATIC_DIR = os.environ.get("STATIC_DIR")
 MAX_BODY = 15 * 1024 * 1024
 REPORT_MESSAGE = "Thanks. Every KBC customer is now warned before paying this account."
 
@@ -152,8 +156,27 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self._path() == "/api/health":
             self._send(200, {"ok": True})
+        elif STATIC_DIR and not self._path().startswith("/api/"):
+            self._send_static()
         else:
             self._send(404, {"error": "Not found: GET %s" % self._path()})
+
+    def _send_static(self):
+        """Serves the built frontend; unknown paths fall back to index.html."""
+        root = os.path.realpath(STATIC_DIR)
+        target = os.path.realpath(os.path.join(root, self._path().lstrip("/")))
+        if not target.startswith(root + os.sep) or not os.path.isfile(target):
+            target = os.path.join(root, "index.html")
+        with open(target, "rb") as handle:
+            data = handle.read()
+        self.send_response(200)
+        self.send_header("Content-Type", mimetypes.guess_type(target)[0] or "application/octet-stream")
+        self.send_header("Content-Length", str(len(data)))
+        # Hashed build assets never change; index.html must always be fresh.
+        immutable = os.sep + "assets" + os.sep in target
+        self.send_header("Cache-Control", "public, max-age=31536000, immutable" if immutable else "no-cache")
+        self.end_headers()
+        self.wfile.write(data)
 
     def do_POST(self):
         route = POST_ROUTES.get(self._path())
@@ -182,9 +205,10 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    port = int(os.environ.get("KBC_TRUST_PORT", "8787"))
-    httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    print("KBC Trust demo API on http://127.0.0.1:%d (simulated data)" % port, flush=True)
+    port = int(os.environ.get("PORT") or os.environ.get("KBC_TRUST_PORT", "8787"))
+    host = os.environ.get("HOST", "127.0.0.1")
+    httpd = ThreadingHTTPServer((host, port), Handler)
+    print("KBC Trust demo API on http://%s:%d (simulated data)" % (host, port), flush=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

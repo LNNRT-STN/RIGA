@@ -58,6 +58,10 @@ On a laptop screen, a panel next to the phone starts the three pitch scenarios. 
 - `3` Supplier invoice with a changed account number, stopped in the transfer review
 - `0` Reset report counts and reload
 
+### Deploy to Cloud Run
+
+The root `Dockerfile` builds the app and runs one container: the Python server serves the API and the built frontend on `$PORT`. Test it locally with `docker build -t riga . && docker run -p 8080:8080 riga`, then open http://localhost:8080. In Cloud Run, keep the maximum number of instances at 1, because scam reports are kept in memory.
+
 ## Multica agents
 
 The team's [Multica](https://multica.ai/) workspace `riga` has two agents that run on the integration lead's machine:
