@@ -56,9 +56,13 @@ On a laptop screen, a panel next to the phone starts the pitch scenarios. Keys w
 - `1` Fake Proximus invoice checked in Kate (sample PDFs in `src/frontend/public/demo/`)
 - `2` Deepfake CEO video call
 - `3` Supplier invoice with a changed account number, stopped in the transfer review
-- `4` Real Proximus invoice with a valid digital seal: "Verified by KBC"
-- `5` Sealed Proximus invoice whose IBAN was changed afterwards: KBC shows what was changed
+- `4` Customer control: what KBC Trust may use, how proactive it is, which partners may reach you, and a log of what it did
+- `5` Kate asks first: document checks are switched off, so Kate asks before she reads the invoice
+- `6` Real Proximus invoice with a valid digital seal: "Verified by KBC"
+- `7` Sealed Proximus invoice whose IBAN was changed afterwards: KBC shows what was changed
 - `0` Reset report counts and reload
+
+Every scenario starts from the default KBC Trust settings, so a setting changed while showing customer control can't change the next scenario. The same controls are in the app under **MyTrust** on Home, **Settings > What you share with KBC Trust**, the line under Kate's greeting, and the note under every verdict.
 
 ### Deploy to Cloud Run
 

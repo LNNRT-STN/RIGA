@@ -11,9 +11,11 @@ import { OffersScreen } from './screens/offers'
 import { MessagesScreen, SettingsScreen } from './screens/settings'
 import { QuickPaySheet, TransferScreen } from './screens/transfer'
 import { InvoicesScreen, TrustScreen } from './screens/trust'
+import { TrustDataScreen } from './screens/trust-data'
 import { AppProvider, useApp, type Route } from './store'
 import { TabBar } from './ui'
 import { resetDemo } from './trust/api'
+import { defaultTrustControls } from './trust/controls'
 
 import { demoEvent, type DemoScenario } from './demo'
 
@@ -29,7 +31,7 @@ export function KbcApp() {
 }
 
 function useDemoScenarios() {
-  const { logIn, setTab, popToRoot, push, setIncomingCall } = useApp()
+  const { logIn, setTab, popToRoot, push, setIncomingCall, setTrustControls, logActivity } = useApp()
   useEffect(() => {
     const run = (scenario: DemoScenario) => {
       if (scenario === 'reset') {
@@ -42,11 +44,24 @@ function useDemoScenarios() {
       setIncomingCall(false)
       setTab('home')
       popToRoot()
+      // Each scenario starts from the default choices, so a setting changed while showing customer
+      // control can't change how the next one ends. The activity log is kept.
+      setTrustControls(() => defaultTrustControls)
       // A fresh run id remounts Kate, so pressing a scenario key again starts that scenario over.
       const runId = Date.now()
       if (scenario === 'invoice') push({ name: 'kate', attach: true, run: runId })
       if (scenario === 'call') setIncomingCall(true)
       if (scenario === 'supplier') push({ name: 'invoices' })
+      if (scenario === 'control') {
+        push({ name: 'trust' })
+        push({ name: 'trust-data' })
+      }
+      if (scenario === 'consent') {
+        // Document checks off, then the Proximus invoice: Kate asks before she reads it.
+        setTrustControls((prev) => ({ ...prev, data: { ...prev.data, documents: false } }))
+        logActivity('You switched off documents', 'KBC Trust no longer uses your documents. Kate asks first.')
+        push({ name: 'kate', attach: true, run: runId })
+      }
       if (scenario === 'sealed') push({ name: 'kate', document: 'proximus-invoice-september.pdf', run: runId })
       if (scenario === 'tampered') push({ name: 'kate', document: 'proximus-invoice-november.pdf', run: runId })
     }
@@ -58,8 +73,10 @@ function useDemoScenarios() {
         '1': 'invoice',
         '2': 'call',
         '3': 'supplier',
-        '4': 'sealed',
-        '5': 'tampered',
+        '4': 'control',
+        '5': 'consent',
+        '6': 'sealed',
+        '7': 'tampered',
         '0': 'reset',
       }
       if (keys[e.key]) run(keys[e.key])
@@ -70,7 +87,7 @@ function useDemoScenarios() {
       window.removeEventListener(demoEvent, onEvent)
       window.removeEventListener('keydown', onKey)
     }
-  }, [logIn, setTab, popToRoot, push, setIncomingCall])
+  }, [logIn, setTab, popToRoot, push, setIncomingCall, setTrustControls, logActivity])
 }
 
 function AppContent() {
@@ -127,6 +144,8 @@ function RouteView({ route }: { route: Route }) {
       return <TransferScreen beneficiaryId={route.beneficiaryId} prefill={route.prefill} />
     case 'trust':
       return <TrustScreen />
+    case 'trust-data':
+      return <TrustDataScreen />
     case 'invoices':
       return <InvoicesScreen />
   }
