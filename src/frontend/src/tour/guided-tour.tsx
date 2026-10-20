@@ -126,7 +126,7 @@ export function GuidedTour({ index, onIndex, onClose, context, onCardHeight }: P
         <p className="mt-2 text-[15px] leading-[1.5] text-pretty sm:text-[16px] lg:mt-3 lg:text-[16.5px]">{step.body}</p>
         {isFirst && (
           <p className="mt-3 text-[14px] text-kbc-muted lg:mt-4">
-            {storySteps.length} steps, about 3 minutes. The tour does the tapping.
+            Press Next to review the demo.
           </p>
         )}
         {isLast && <p className="mt-3 text-[13px] leading-[1.4] text-kbc-muted">All people, companies and amounts are fictional. Transfers and call analysis are simulated.</p>}
