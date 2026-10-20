@@ -35,16 +35,6 @@ export const tourSteps: TourStep[] = [
     enter: ({ showPortal }) => showPortal(null),
   },
   {
-    id: 'home',
-    chapter: 'Meet Laura',
-    title: 'Meet Laura',
-    body: 'Laura pays the bills for her small company.',
-    enter: ({ showPortal }) => {
-      showPortal(null)
-      startDemo('home')
-    },
-  },
-  {
     id: 'invoice',
     chapter: 'Check before you pay',
     title: 'A fake Proximus invoice',
@@ -52,26 +42,6 @@ export const tourSteps: TourStep[] = [
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('invoice-checked')
-    },
-  },
-  {
-    id: 'sealed',
-    chapter: 'Check before you pay',
-    title: 'A sealed invoice',
-    body: 'Proximus sealed this invoice with its own key.',
-    enter: ({ showPortal }) => {
-      showPortal(null)
-      startDemo('sealed')
-    },
-  },
-  {
-    id: 'tampered',
-    chapter: 'Check before you pay',
-    title: 'Changed after sealing',
-    body: 'Someone swapped the account number after sealing, and KBC shows exactly what changed.',
-    enter: ({ showPortal }) => {
-      showPortal(null)
-      startDemo('tampered')
     },
   },
   {
@@ -132,17 +102,7 @@ export const tourSteps: TourStep[] = [
     id: 'partner-signup',
     chapter: 'Companies join',
     title: 'The company signs up',
-    body: 'The travel agency signs up with its enterprise number, and KBC reads its details from the company register.',
-    enter: async ({ showPortal, current }) => {
-      await freshPartners()
-      if (current()) showPortal('fill')
-    },
-  },
-  {
-    id: 'partner-live',
-    chapter: 'Companies join',
-    title: 'Verified by KBC',
-    body: 'Every check passes, so Zonnig Reizen is Verified by KBC at once.',
+    body: 'Zonnig Reizen signs up, and KBC verifies it at once.',
     enter: async ({ showPortal, current }) => {
       await freshPartners()
       if (current()) showPortal('submit')

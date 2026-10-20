@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import {
   ArrowRight,
   Check,
@@ -176,8 +176,11 @@ export function PartnerPortal({ onClose, tourAction }: { onClose: () => void; to
   }
 
   // The tour resets the backend before each partner step, so both actions start from a fresh company.
+  // Each action runs once, also under React's development double effects: signing up twice fails.
+  const handledTourAction = useRef(0)
   useEffect(() => {
-    if (!tourAction) return
+    if (!tourAction || handledTourAction.current === tourAction.id) return
+    handledTourAction.current = tourAction.id
     void fillDemo('genuine').then((filled) => {
       if (filled && tourAction.kind === 'submit') void submit(filled)
     })
@@ -291,7 +294,7 @@ export function PartnerPortal({ onClose, tourAction }: { onClose: () => void; to
           )}
           {step === 'result' &&
             (result ? (
-              <ResultView result={result} form={form} onEdit={() => setStep('proof')} onStartOver={startOver} showApi={!tourAction} />
+              <ResultView result={result} form={form} onEdit={() => setStep('proof')} onStartOver={startOver} inTour={Boolean(tourAction)} />
             ) : (
               <Verifying />
             ))}
@@ -694,13 +697,14 @@ function ResultView({
   form,
   onEdit,
   onStartOver,
-  showApi,
+  inTour,
 }: {
   result: ApplyResult
   form: Application
   onEdit: () => void
   onStartOver: () => void
-  showApi: boolean
+  /** The tour shows the outcome only: no API key and no buttons that lead elsewhere. */
+  inTour: boolean
 }) {
   const style = decisionStyles[result.decision]
   const Icon = style.icon
@@ -721,7 +725,7 @@ function ResultView({
 
         {open.length > 0 && <CheckList checks={open} className="mt-4" />}
 
-        <div className="mt-5 flex flex-wrap gap-3">
+        <div className={cn('mt-5 flex flex-wrap gap-3', inTour && 'hidden')}>
           {result.decision === 'approved' && (
             <PrimaryButton onClick={() => askKate(`Is ${website} real?`)}>
               <Smartphone className="size-[18px]" strokeWidth={1.8} />
@@ -735,7 +739,7 @@ function ResultView({
         {result.decision === 'approved' && <AllChecks checks={result.checks} />}
       </div>
 
-      {showApi && result.decision === 'approved' && result.apiKey && <ApiPanel apiKey={result.apiKey} website={website} />}
+      {!inTour && result.decision === 'approved' && result.apiKey && <ApiPanel apiKey={result.apiKey} website={website} />}
     </div>
   )
 }
