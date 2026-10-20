@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { beneficiaries, business, guardianAngel, type Account } from '../data'
+import { beneficiaries, type Account } from '../data'
 import { formatAmount, formatIban, isValidBelgianIban, parseAmount } from '../format'
 import { PushedPage } from '../layout'
 import { useApp, type TransferPrefill } from '../store'
@@ -338,12 +338,6 @@ function ReviewStage({
     }
   }, [runCheck, key, name, iban, isBusiness, logActivity])
 
-  const guardianLine = isBusiness
-    ? `${business.ceo}, second approver at ${business.name}, has been informed.`
-    : trustControls.guardianAngel
-      ? `Your Guardian Angel ${guardianAngel.name} has been informed.`
-      : 'You chose not to inform a Guardian Angel.'
-
   // "Stop risky payments" blocks; "Warn me, I decide" shows the same verdict but leaves the choice to the customer.
   if (trust?.decision === 'block' && !(mode !== 'stop' && overrideKey === key)) {
     const contact = trust.verifiedContact
@@ -376,11 +370,11 @@ function ReviewStage({
             </>
           }
         />
-        <p className="mt-4 rounded-[8px] bg-kbc-pale px-4 py-3 text-[13.5px] leading-[1.45] text-kbc-navy">
-          {mode === 'stop'
-            ? `No money has left your account. ${guardianLine}`
-            : 'You chose “Warn me, I decide”. No money has left your account yet.'}
-        </p>
+        {mode !== 'stop' && (
+          <p className="mt-4 rounded-[8px] bg-kbc-pale px-4 py-3 text-[13.5px] leading-[1.45] text-kbc-navy">
+            You chose “Warn me, I decide”. No money has left your account yet.
+          </p>
+        )}
         {mode !== 'stop' && (
           <button
             type="button"

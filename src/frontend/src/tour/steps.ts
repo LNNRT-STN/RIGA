@@ -102,17 +102,7 @@ export const tourSteps: TourStep[] = [
     id: 'partner-signup',
     chapter: 'Companies join',
     title: 'The company signs up',
-    body: 'The travel agency signs up with its enterprise number, and KBC reads its details from the company register.',
-    enter: async ({ showPortal, current }) => {
-      await freshPartners()
-      if (current()) showPortal('fill')
-    },
-  },
-  {
-    id: 'partner-live',
-    chapter: 'Companies join',
-    title: 'Verified by KBC',
-    body: 'Every check passes, so Zonnig Reizen is Verified by KBC at once.',
+    body: 'Zonnig Reizen signs up, and KBC verifies it at once.',
     enter: async ({ showPortal, current }) => {
       await freshPartners()
       if (current()) showPortal('submit')

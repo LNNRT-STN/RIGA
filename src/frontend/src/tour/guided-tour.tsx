@@ -135,9 +135,9 @@ export function GuidedTour({ index, onIndex, onClose, context, onCardHeight }: P
       {/* Controls sit at the bottom of a fixed-height card, so Next stays under the pointer on every step. */}
       {isFirst ? (
         <div className="mt-auto flex flex-col gap-2 pt-4 lg:pt-7">
-          <PrimaryButton onClick={next}>
-            <Play className="size-[17px] fill-current" strokeWidth={0} />
-            Start the tour
+          <PrimaryButton onClick={next} ariaKeyshortcuts="ArrowRight">
+            Next
+            <ArrowRight className="size-[18px]" strokeWidth={2} />
           </PrimaryButton>
         </div>
       ) : isLast ? (
@@ -153,11 +153,8 @@ export function GuidedTour({ index, onIndex, onClose, context, onCardHeight }: P
         </div>
       ) : (
         <div className="mt-auto pt-4 lg:pt-7">
-          <p className="flex items-baseline justify-between gap-3 text-[13px] leading-[1.3]">
-            <span className="min-w-0 font-bold">{step.chapter}</span>
-            <span className="shrink-0 text-kbc-muted tabular-nums">
-              {storyIndex + 1} of {storySteps.length}
-            </span>
+          <p className="text-right text-[13px] leading-[1.3] text-kbc-muted tabular-nums">
+            {storyIndex + 1} of {storySteps.length}
           </p>
           <Progress current={storyIndex} />
           <div className="mt-3 flex items-center gap-3 lg:mt-4">

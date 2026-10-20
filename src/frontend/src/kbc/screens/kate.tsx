@@ -181,7 +181,7 @@ export function KateScreen({ prompt, attach = false, openDocument }: { prompt?: 
                 {m.checking && <CheckingSteps subject={m.checking} />}
                 {m.trust && <TrustReply result={m.trust} />}
                 {m.consent && (
-                  <ConsentCard file={documentName(m.consent)} onAnswer={(choice) => answerConsent(m.id, m.consent!, choice)} />
+                  <ConsentCard onAnswer={(choice) => answerConsent(m.id, m.consent!, choice)} />
                 )}
                 {m.actions && (
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -445,7 +445,7 @@ function DataScopeLine() {
 }
 
 /** Kate asks before she opens a document when the customer switched document checks off. */
-function ConsentCard({ file, onAnswer }: { file: string; onAnswer: (choice: Consent) => void }) {
+function ConsentCard({ onAnswer }: { onAnswer: (choice: Consent) => void }) {
   return (
     <div className="rounded-[12px] bg-kbc-pale px-4 py-3">
       <p className="flex items-center gap-2 text-[14.5px] font-bold text-kbc-navy">
@@ -453,8 +453,7 @@ function ConsentCard({ file, onAnswer }: { file: string; onAnswer: (choice: Cons
         May I read this document?
       </p>
       <p className="mt-1 text-[15px] leading-[1.45] text-kbc-navy">
-        You switched off document checks, so I haven’t opened <span className="break-all">{file}</span>. If you allow it, I read it
-        once and delete it after the check.
+        You switched off document checks. If you allow it, I read it once and delete it after.
       </p>
       <div className="mt-3 flex flex-col gap-2">
         <button
