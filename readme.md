@@ -42,7 +42,7 @@ Then paste the key from the team's password manager into `.env`. Keep the key in
 
 - `src/components/device/iphone-frame.tsx`: device frame, status bar and safe areas.
 - `src/kbc/`: the app. Screens live in `screens/`, demo data in `data.ts`, navigation and state in `store.tsx`.
-- `src/kbc/kate.ts`: scripted Kate replies. Replace `getKateReply` with a call to our backend to show the final product inside the app.
+- `src/kbc/kate.ts`: Kate's replies. Questions that lead to an app action keep a scripted reply; anything else is answered by an LLM through the backend (`/api/kate/chat`, OpenRouter), labelled "Answer written by AI", with the scripted reply as fallback.
 - Photo slots use stand-in artwork; pass an `image` path to `Artwork` or `PromoCard` to use real images from `public/`.
 
 All customer data is fictional, and transfers are simulated.
@@ -70,7 +70,7 @@ Every scenario starts from the default KBC Trust settings, so a setting changed 
 
 ### Deploy to Cloud Run
 
-The root `Dockerfile` builds the app and runs one container: the Python server serves the API and the built frontend on `$PORT`. Test it locally with `docker build -t riga . && docker run -p 8080:8080 riga`, then open http://localhost:8080. In Cloud Run, keep the maximum number of instances at 1, because scam reports are kept in memory.
+The root `Dockerfile` builds the app and runs one container: the Python server serves the API and the built frontend on `$PORT`. Test it locally with `docker build -t riga . && docker run -p 8080:8080 riga`, then open http://localhost:8080. In Cloud Run, keep the maximum number of instances at 1, because scam reports are kept in memory, and set `OPENROUTER_API_KEY` as an environment variable on the service so Kate's AI replies work (the image doesn't contain `.env`).
 
 ## Multica agents
 

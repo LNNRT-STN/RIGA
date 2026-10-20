@@ -18,6 +18,8 @@ type Message =
       from: 'kate'
       text?: string
       actions?: KateAction[]
+      /** Written by the LLM, so it carries the "Answer written by AI" label. */
+      ai?: boolean
       checking?: TrustResult['subject']
       trust?: TrustResult
       /** Document checks are off, so Kate asks before she opens this file. */
@@ -91,7 +93,8 @@ export function KateScreen({ prompt, attach = false, openDocument }: { prompt?: 
       return
     }
     setBusy(true)
-    const reply = await getKateReply(trimmed, { accounts })
+    const history = messages.flatMap((m) => (m.text ? [{ from: m.from, text: m.text }] : []))
+    const reply = await getKateReply(trimmed, { accounts, history })
     setBusy(false)
     add({ from: 'kate', ...reply })
   }
@@ -178,6 +181,7 @@ export function KateScreen({ prompt, attach = false, openDocument }: { prompt?: 
               <li key={m.id} className="animate-in duration-300 fade-in slide-in-from-bottom-1 motion-reduce:animate-none">
                 <KateMark className="mb-2 size-[26px]" />
                 {m.text && <p className="text-[16.5px] leading-[1.5] text-kbc-navy">{m.text}</p>}
+                {m.ai && <p className="mt-1 text-[13px] text-kbc-muted">Answer written by AI</p>}
                 {m.checking && <CheckingSteps subject={m.checking} />}
                 {m.trust && <TrustReply result={m.trust} />}
                 {m.consent && (
