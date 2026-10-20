@@ -35,7 +35,7 @@ class KateTests(unittest.TestCase):
 
     def test_network_error_means_unavailable(self):
         with mock.patch.object(kate, "api_key", return_value="test"), mock.patch(
-            "urllib.request.urlopen", side_effect=OSError("offline")
+            "http.client.HTTPSConnection.request", side_effect=OSError("offline")
         ):
             with self.assertRaises(kate.KateUnavailable):
                 kate.reply("Hello")

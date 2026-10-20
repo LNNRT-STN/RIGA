@@ -43,18 +43,39 @@ class ApiError(Exception):
 
 
 def demo_samples():
+    """{file name: path} of the demo PDFs. Only these paths are ever opened for a sample."""
     try:
-        return sorted(n for n in os.listdir(DEMO_DIR) if n.lower().endswith(".pdf"))
+        names = sorted(n for n in os.listdir(DEMO_DIR) if n.lower().endswith(".pdf"))
     except OSError:
-        return []
+        return {}
+    return {n: os.path.join(DEMO_DIR, n) for n in names}
 
 
 def read_sample(name):
-    name = os.path.basename(str(name or ""))
-    if name not in demo_samples():
-        raise ApiError(404, "Unknown sample: %s" % name)
-    with open(os.path.join(DEMO_DIR, name), "rb") as fh:
+    name = str(name or "")
+    path = demo_samples().get(name)
+    if path is None:
+        raise ApiError(404, "Unknown sample: %s" % os.path.basename(name))
+    with open(path, "rb") as fh:
         return name, fh.read()
+
+
+def static_files(root):
+    """{URL path: file path} of the built frontend, listed once at startup.
+
+    Only paths in this index are ever opened, so a request path can't reach other files."""
+    if not root:
+        return {}
+    root = os.path.realpath(root)
+    index = {}
+    for folder, _dirs, names in os.walk(root):
+        for n in names:
+            path = os.path.join(folder, n)
+            index["/" + os.path.relpath(path, root).replace(os.sep, "/")] = path
+    return index
+
+
+STATIC_FILES = static_files(STATIC_DIR)
 
 
 def invoice_endpoint(body):
@@ -202,10 +223,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def _send_static(self):
         """Serves the built frontend; unknown paths fall back to index.html."""
-        root = os.path.realpath(STATIC_DIR)
-        target = os.path.realpath(os.path.join(root, self._path().lstrip("/")))
-        if not target.startswith(root + os.sep) or not os.path.isfile(target):
-            target = os.path.join(root, "index.html")
+        target = STATIC_FILES.get(self._path()) or STATIC_FILES.get("/index.html")
+        if target is None:
+            self._send(404, {"error": "Not found: GET %s" % self._path()})
+            return
         with open(target, "rb") as handle:
             data = handle.read()
         self.send_response(200)
