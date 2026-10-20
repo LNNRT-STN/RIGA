@@ -16,7 +16,7 @@ endobj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
 endobj
 6 0 obj
-<< /Length 3257 >>
+<< /Length 3390 >>
 stream
 0.953 0.980 0.996 rg 0.0 732.0 595.0 110.0 re f
 BT /F2 20 Tf 0.078 0.161 0.302 rg 1 0 0 1 56.0 780.0 Tm (Proximus) Tj ET
@@ -56,11 +56,12 @@ BT /F1 10 Tf 0.078 0.161 0.302 rg 1 0 0 1 56.0 272.0 Tm (Please pay by 30 Oct 20
 0.882 0.914 0.941 RG 0.8 w 56 134.0 m 539 134.0 l S
 BT /F1 9 Tf 0.357 0.420 0.510 rg 1 0 0 1 56.0 120.0 Tm (Questions? Email: noreply@proximus.be    Phone: 0800 22 800) Tj ET
 BT /F1 9 Tf 0.357 0.420 0.510 rg 1 0 0 1 56.0 106.0 Tm (Website: www.proximus.be    VAT: BE 0202.239.951) Tj ET
+BT /F1 8 Tf 0.357 0.420 0.510 rg 1 0 0 1 56.0 62.0 Tm (This invoice carries a digital seal. Check it with Kate in KBC Mobile.) Tj ET
 BT /F1 8 Tf 0.357 0.420 0.510 rg 1 0 0 1 56.0 48.0 Tm (Fictional document for a KBC Hackathon demo.) Tj ET
 endstream
 endobj
 7 0 obj
-<< /Title (Proximus invoice PRX-2026-09-55210) /Producer (KBC Trust demo generator) >>
+<< /Title (Proximus invoice PRX-2026-09-55210) /Producer (KBC Trust demo generator) /KBCTrustSeal (eyJhbGciOiJFZERTQSIsImtpZCI6InByb3hpbXVzLTIwMjYtMDEiLCJ0eXAiOiJrYmMtaW52b2ljZS1zZWFsK2p3cyJ9.eyJhbXQiOiI2NC41MCIsImN1ciI6IkVVUiIsImR1ZSI6IjIwMjYtMTAtMzAiLCJpYXQiOiIyMDI2LTA5LTE2IiwiaWJhbiI6IkJFMzgwMDAwMTIzNDU2NzIiLCJpbnYiOiJQUlgtMjAyNi0wOS01NTIxMCIsImlzcyI6InByb3hpbXVzIiwicmVmIjoiKysrNzcxLzA0NDIvNTUyMTArKysiLCJ2IjoxfQ.8DT_9TtPSr2B5z1E7gqJE8IwvzfDF34Lc1EIFixzHpaiuHwTh6G5LFF0wC5Kuri1soTweXcKeVwmK4UfW_fuCw) >>
 endobj
 xref
 0 8
@@ -71,9 +72,9 @@ xref
 0000000257 00000 n 
 0000000354 00000 n 
 0000000456 00000 n 
-0000003764 00000 n 
+0000003897 00000 n 
 trailer
 << /Size 8 /Root 1 0 R /Info 7 0 R >>
 startxref
-3866
+4422
 %%EOF

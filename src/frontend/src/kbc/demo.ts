@@ -1,5 +1,5 @@
-/** Demo scenarios for the pitch. The presenter panel in App.tsx and keys 1, 2, 3 and 0 send them. */
-export type DemoScenario = 'invoice' | 'call' | 'supplier' | 'reset'
+/** Demo scenarios for the pitch. The presenter panel in App.tsx and keys 1 to 7 and 0 send them. */
+export type DemoScenario = 'invoice' | 'call' | 'supplier' | 'control' | 'consent' | 'sealed' | 'tampered' | 'reset'
 export const demoEvent = 'kbc-demo'
 export const kateEvent = 'kbc-demo-kate'
 

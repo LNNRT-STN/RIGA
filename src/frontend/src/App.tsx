@@ -17,14 +17,14 @@ function App() {
     window.history.replaceState(null, '', open ? portalHash : window.location.pathname + window.location.search)
   }
 
-  // Key 4 opens and closes the partner portal, key 5 asks Kate about the demo partner. Keys 1, 2, 3 and 0
+  // Key 8 opens and closes the partner portal, key 9 asks Kate about the demo partner. Keys 1 to 7 and 0
   // are handled inside the phone (kbc-app.tsx).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null
       if (target?.closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return
-      if (e.key === '4') showPortal(!portalOpen)
-      if (e.key === '5') askKate('Is zonnigreizen.be real?')
+      if (e.key === '8') showPortal(!portalOpen)
+      if (e.key === '9') askKate('Is zonnigreizen.be real?')
       if (e.key === 'Escape' && portalOpen) showPortal(false)
     }
     window.addEventListener('keydown', onKey)
@@ -36,8 +36,12 @@ function App() {
     { key: '1', title: 'Fake invoice', detail: 'Laura checks a Proximus invoice in Kate', run: scenario('invoice') },
     { key: '2', title: 'Deepfake CEO call', detail: 'Voice and video check during a call', run: scenario('call') },
     { key: '3', title: 'Supplier account changed', detail: 'Payment stopped before it leaves', run: scenario('supplier') },
-    { key: '4', title: 'Partner sign-up', detail: 'A company becomes Verified by KBC', run: () => showPortal(true) },
-    { key: '5', title: 'Ask Kate about the partner', detail: 'Is zonnigreizen.be real?', run: () => askKate('Is zonnigreizen.be real?') },
+    { key: '4', title: 'Customer control', detail: 'What KBC Trust may use, and what it did', run: scenario('control') },
+    { key: '5', title: 'Kate asks first', detail: 'Document checks off: Kate asks before reading', run: scenario('consent') },
+    { key: '6', title: 'Verified invoice', detail: 'Proximus sealed it, KBC checks the seal', run: scenario('sealed') },
+    { key: '7', title: 'Sealed invoice changed', detail: 'Looks perfect, but the IBAN was swapped', run: scenario('tampered') },
+    { key: '8', title: 'Partner sign-up', detail: 'A company becomes Verified by KBC', run: () => showPortal(true) },
+    { key: '9', title: 'Ask Kate about the partner', detail: 'Is zonnigreizen.be real?', run: () => askKate('Is zonnigreizen.be real?') },
     { key: '0', title: 'Reset demo', detail: 'Clears reports and new partners, reloads', run: scenario('reset') },
   ]
 

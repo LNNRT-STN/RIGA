@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowLeft, ArrowUp, ChevronRight, FileText, Mic, Paperclip, Phone, ShieldCheck, Upload, X } from 'lucide-react'
+import { ArrowLeft, ArrowUp, ChevronRight, FileText, LockKeyhole, Mic, Paperclip, Phone, ShieldCheck, Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { customer } from '../data'
 import { getKateReply, kateSuggestions, type KateAction } from '../kate'
@@ -7,6 +7,9 @@ import { useApp } from '../store'
 import { CircleButton, KateMark } from '../ui'
 import { checkInvoice, checkWebsite, demoDocuments, reportScam, type TrustResult } from '../trust/api'
 import { CheckingSteps, SecondaryAction, TrustVerdict, VerifiedContactButton } from '../trust/components'
+import { dataTypes, dataUse } from '../trust/controls'
+
+type DocumentSource = { sample: string } | { file: File }
 
 type Message =
   | { id: number; from: 'user'; text: string; file?: string }
@@ -17,15 +20,22 @@ type Message =
       actions?: KateAction[]
       checking?: TrustResult['subject']
       trust?: TrustResult
+      /** Document checks are off, so Kate asks before she opens this file. */
+      consent?: DocumentSource
     }
+
+type Consent = 'once' | 'always' | 'no'
+
+const documentName = (source: DocumentSource) => ('sample' in source ? source.sample : source.file.name)
 
 type NewMessage = Message extends infer M ? (M extends Message ? Omit<M, 'id'> : never) : never
 
 // Plain domains or URLs typed into the chat, such as "proximus-betaling.be" or "https://…".
 const websitePattern = /\b((?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,})(?:\/\S*)?/i
 
-export function KateScreen({ prompt, attach = false }: { prompt?: string; attach?: boolean }) {
-  const { pop, popToRoot, push, accounts, showToast } = useApp()
+/** `openDocument` checks a demo PDF as soon as Kate opens, for the presenter shortcuts. */
+export function KateScreen({ prompt, attach = false, openDocument }: { prompt?: string; attach?: boolean; openDocument?: string }) {
+  const { pop, popToRoot, push, accounts, showToast, trustControls, setTrustControls, logActivity } = useApp()
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 0,
@@ -53,12 +63,14 @@ export function KateScreen({ prompt, attach = false }: { prompt?: string; attach
     setMessages((prev) => prev.map((m) => (m.id === id ? { ...message, id } : m)))
 
   /** Shows the checking steps, then swaps them for the verdict in the same place. */
-  const runCheck = async (subject: TrustResult['subject'], work: () => Promise<TrustResult>) => {
+  const runCheck = async (subject: TrustResult['subject'], what: string, work: () => Promise<TrustResult>, note = '') => {
     setBusy(true)
     const id = add({ from: 'kate', checking: subject })
     try {
       const trust = await work()
       replace(id, { from: 'kate', trust })
+      const { used, kept } = dataUse(subject)
+      logActivity(`Checked ${what}`, `${note}Used ${used}. ${kept} Result: ${trust.headline}`)
     } catch {
       replace(id, {
         from: 'kate',
@@ -76,7 +88,7 @@ export function KateScreen({ prompt, attach = false }: { prompt?: string; attach
     add({ from: 'user', text: trimmed })
     const site = trimmed.match(websitePattern)
     if (site) {
-      await runCheck('website', () => checkWebsite(site[1]))
+      await runCheck('website', site[1], () => checkWebsite(site[1]))
       return
     }
     setBusy(true)
@@ -85,11 +97,30 @@ export function KateScreen({ prompt, attach = false }: { prompt?: string; attach
     add({ from: 'kate', ...reply })
   }
 
-  const sendDocument = (source: { sample: string } | { file: File }) => {
+  const sendDocument = (source: DocumentSource) => {
     setSheetOpen(false)
-    const name = 'sample' in source ? source.sample : source.file.name
-    add({ from: 'user', text: 'Is this invoice real?', file: name })
-    void runCheck('invoice', () => checkInvoice(source))
+    add({ from: 'user', text: 'Is this invoice real?', file: documentName(source) })
+    if (!trustControls.data.documents) {
+      add({ from: 'kate', consent: source })
+      return
+    }
+    void runCheck('invoice', documentName(source), () => checkInvoice(source))
+  }
+
+  /** The customer's answer to "May I read this document?". Nothing is opened before they choose. */
+  const answerConsent = (id: number, source: DocumentSource, choice: Consent) => {
+    if (choice === 'no') {
+      replace(id, { from: 'kate', text: 'OK, I haven’t opened it. Don’t pay it until you’re sure who sent it.' })
+      return
+    }
+    if (choice === 'always') {
+      setTrustControls((prev) => ({ ...prev, data: { ...prev.data, documents: true } }))
+      logActivity('You switched on documents', 'KBC Trust may use your documents again.')
+      replace(id, { from: 'kate', text: 'Done. I’ll check documents you share from now on. You can change this in What you share.' })
+    } else {
+      replace(id, { from: 'kate', text: 'I’ll read this document once, for this check only.' })
+    }
+    void runCheck('invoice', documentName(source), () => checkInvoice(source), choice === 'once' ? 'Allowed once by you. ' : '')
   }
 
   useEffect(() => {
@@ -100,6 +131,15 @@ export function KateScreen({ prompt, attach = false }: { prompt?: string; attach
     // Send the opening prompt once; `send` is intentionally not a dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prompt])
+
+  useEffect(() => {
+    if (openDocument && !sentPrompt.current) {
+      sentPrompt.current = true
+      sendDocument({ sample: openDocument })
+    }
+    // Check the opening document once; `sendDocument` is intentionally not a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openDocument])
 
   const runAction = (action: KateAction) => {
     if (action.action === 'transfer') push({ name: 'transfer' })
@@ -132,7 +172,8 @@ export function KateScreen({ prompt, attach = false }: { prompt?: string; attach
       <div ref={scrollRef} className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-3">
         <div className="flex-1" />
         <p className="pt-6 text-center text-[13.5px] font-semibold text-kbc-navy">Today</p>
-        <p className="pb-6 text-center text-[13.5px] text-kbc-link">Ask Kate, your AI assistant</p>
+        <p className="text-center text-[13.5px] text-kbc-link">Ask Kate, your AI assistant</p>
+        <DataScopeLine />
         <ul className="flex flex-col gap-4" aria-live="polite">
           {messages.map((m) =>
             m.from === 'kate' ? (
@@ -141,6 +182,9 @@ export function KateScreen({ prompt, attach = false }: { prompt?: string; attach
                 {m.text && <p className="text-[16.5px] leading-[1.5] text-kbc-navy">{m.text}</p>}
                 {m.checking && <CheckingSteps subject={m.checking} />}
                 {m.trust && <TrustReply result={m.trust} />}
+                {m.consent && (
+                  <ConsentCard file={documentName(m.consent)} onAnswer={(choice) => answerConsent(m.id, m.consent!, choice)} />
+                )}
                 {m.actions && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {m.actions.map((a) => (
@@ -243,7 +287,8 @@ export function KateScreen({ prompt, attach = false }: { prompt?: string; attach
 
 /** Verdict plus the one action that fits it: call the real sender, or pay a verified invoice. */
 function TrustReply({ result }: { result: TrustResult }) {
-  const { push, showToast } = useApp()
+  const { push, showToast, logActivity } = useApp()
+  const manageData = () => push({ name: 'trust-data' })
   const [reported, setReported] = useState(false)
   const contact = result.verifiedContact
   const iban = result.extracted?.IBAN
@@ -255,6 +300,7 @@ function TrustReply({ result }: { result: TrustResult }) {
       const { message } = await reportScam({ iban })
       setReported(true)
       showToast(message)
+      logActivity('You reported an account as a scam', `Only ${iban} was shared with other KBC customers, never your name.`)
     } catch {
       showToast('Reporting is not available right now. Please try again.')
     }
@@ -276,6 +322,7 @@ function TrustReply({ result }: { result: TrustResult }) {
     return (
       <TrustVerdict
         result={result}
+        onManageData={manageData}
         actions={
           result.subject === 'invoice' && iban && amount ? (
             <button
@@ -294,6 +341,7 @@ function TrustReply({ result }: { result: TrustResult }) {
   return (
     <TrustVerdict
       result={result}
+      onManageData={manageData}
       actions={
         <>
           {contact && (
@@ -314,7 +362,7 @@ function TrustReply({ result }: { result: TrustResult }) {
   )
 }
 
-function AttachSheet({ onClose, onPick }: { onClose: () => void; onPick: (source: { sample: string } | { file: File }) => void }) {
+function AttachSheet({ onClose, onPick }: { onClose: () => void; onPick: (source: DocumentSource) => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
   return (
     <div className="absolute inset-0 z-[60]">
@@ -327,7 +375,7 @@ function AttachSheet({ onClose, onPick }: { onClose: () => void; onPick: (source
         <span aria-hidden className="mx-auto block h-[5px] w-[40px] rounded-full bg-[#d5dbe2]" />
         <h2 className="px-4 pt-4 text-[19px] font-extrabold text-kbc-navy">Check if it’s real</h2>
         <p className="px-4 pt-1 pb-3 text-[14.5px] leading-[1.4] text-kbc-muted">
-          Kate reads the document and checks it with KBC Trust. You decide what you share.
+          Kate reads the document once to check it with KBC Trust, then deletes it. You decide what you share.
         </p>
         <p className="px-4 pt-2 pb-1 text-[13.5px] font-bold text-kbc-navy">Recent documents</p>
         {demoDocuments.map((doc) => (
@@ -368,6 +416,58 @@ function AttachSheet({ onClose, onPick }: { onClose: () => void; onPick: (source
             Choose a PDF
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+/** Always visible under Kate's greeting: what she may use, one tap from changing it. */
+function DataScopeLine() {
+  const { trustControls, push } = useApp()
+  const allowed = dataTypes.filter((d) => trustControls.data[d.key]).map((d) => d.short)
+  const list =
+    allowed.length === 0
+      ? 'Kate uses only what you type'
+      : `Kate may check your ${allowed.length > 1 ? `${allowed.slice(0, -1).join(', ')} and ${allowed.at(-1)}` : allowed[0]}`
+  return (
+    <p className="pt-2 pb-6 text-center">
+      <button
+        type="button"
+        onClick={() => push({ name: 'trust-data' })}
+        className="inline-flex min-h-[32px] items-center gap-[6px] rounded-full bg-kbc-pale px-3 text-[13px] text-kbc-navy transition-colors duration-150 active:bg-kbc-surface-blue"
+      >
+        <LockKeyhole className="size-[14px] shrink-0 text-kbc-blue" strokeWidth={2} />
+        {list}
+        <span className="font-semibold text-kbc-link">Change</span>
+      </button>
+    </p>
+  )
+}
+
+/** Kate asks before she opens a document when the customer switched document checks off. */
+function ConsentCard({ file, onAnswer }: { file: string; onAnswer: (choice: Consent) => void }) {
+  return (
+    <div className="rounded-[12px] bg-kbc-pale px-4 py-3">
+      <p className="flex items-center gap-2 text-[14.5px] font-bold text-kbc-navy">
+        <LockKeyhole className="size-[18px] text-kbc-blue" strokeWidth={1.8} />
+        May I read this document?
+      </p>
+      <p className="mt-1 text-[15px] leading-[1.45] text-kbc-navy">
+        You switched off document checks, so I haven’t opened <span className="break-all">{file}</span>. If you allow it, I read it
+        once and delete it after the check.
+      </p>
+      <div className="mt-3 flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() => onAnswer('once')}
+          className="h-[48px] w-full rounded-full bg-kbc-blue text-[16px] font-semibold text-white transition-transform duration-150 active:scale-[0.98]"
+        >
+          Check this one only
+        </button>
+        <SecondaryAction onClick={() => onAnswer('always')}>Always allow documents</SecondaryAction>
+        <button type="button" onClick={() => onAnswer('no')} className="h-[44px] w-full text-[15.5px] font-semibold text-kbc-link">
+          Not now
+        </button>
       </div>
     </div>
   )

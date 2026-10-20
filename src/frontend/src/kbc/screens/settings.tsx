@@ -13,6 +13,7 @@ import {
   House,
   KeyRound,
   LayoutGrid,
+  LockKeyhole,
   LogOut,
   Moon,
   ScanFace,
@@ -60,12 +61,15 @@ export function SettingsScreen() {
       title: 'Security',
       rows: [
         ['KBC Trust', ShieldCheck],
+        ['What you share with KBC Trust', LockKeyhole],
         ['Secret code', KeyRound],
         ['Face ID', ScanFace],
         ['Activate on another device', Fingerprint],
       ],
     },
   ]
+
+  const opens: Record<string, 'trust' | 'trust-data'> = { 'KBC Trust': 'trust', 'What you share with KBC Trust': 'trust-data' }
 
   return (
     <PushedPage title="Settings and more" className="pb-12">
@@ -81,7 +85,7 @@ export function SettingsScreen() {
         <section key={s.title}>
           <h2 className="px-4 pt-7 pb-2 text-[19px] font-extrabold text-kbc-navy">{s.title}</h2>
           {s.rows.map(([label, icon]) => (
-            <ListRow key={label} icon={icon} label={label} onClick={label === 'KBC Trust' ? () => push({ name: 'trust' }) : soon} />
+            <ListRow key={label} icon={icon} label={label} onClick={opens[label] ? () => push({ name: opens[label] }) : soon} />
           ))}
         </section>
       ))}

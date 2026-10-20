@@ -49,14 +49,22 @@ All customer data is fictional, and transfers are simulated.
 
 ### KBC Trust demo
 
-`npm run dev` also starts the KBC Trust backend (`src/backend/server.py`, Python 3 standard library, no installs) and proxies `/api` to it. Set `KBC_TRUST_BACKEND=off` to start only the frontend. See [src/backend/README.md](src/backend/README.md) for the endpoints and what is rule based or simulated.
+`npm run dev` also starts the KBC Trust backend (`src/backend/server.py`) and proxies `/api` to it. Run `pip install -r src/backend/requirements.txt` once for the digital invoice seal; without it the backend still runs, with seals off. Set `KBC_TRUST_BACKEND=off` to start only the frontend. See [src/backend/README.md](src/backend/README.md) for the endpoints and what is rule based or simulated.
 
-On a laptop screen, a panel next to the phone starts the three pitch scenarios. Keys work too:
+On a laptop screen, a panel next to the phone starts the pitch scenarios. Keys work too:
 
 - `1` Fake Proximus invoice checked in Kate (sample PDFs in `src/frontend/public/demo/`)
 - `2` Deepfake CEO video call
 - `3` Supplier invoice with a changed account number, stopped in the transfer review
-- `0` Reset report counts and reload
+- `4` Customer control: what KBC Trust may use, how proactive it is, which partners may reach you, and a log of what it did
+- `5` Kate asks first: document checks are switched off, so Kate asks before she reads the invoice
+- `6` Real Proximus invoice with a valid digital seal: "Verified by KBC"
+- `7` Sealed Proximus invoice whose IBAN was changed afterwards: KBC shows what was changed
+- `8` Partner sign-up: a company becomes Verified by KBC in a portal next to the phone (`#partners` in the URL opens it directly)
+- `9` Ask Kate "Is zonnigreizen.be real?", before and after the partner signs up
+- `0` Reset report counts and partners added through sign-up, and reload
+
+Every scenario starts from the default KBC Trust settings, so a setting changed while showing customer control can't change the next scenario. The same controls are in the app under **MyTrust** on Home, **Settings > What you share with KBC Trust**, the line under Kate's greeting, and the note under every verdict.
 
 ### Deploy to Cloud Run
 

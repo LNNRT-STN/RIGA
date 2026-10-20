@@ -15,6 +15,19 @@ export type VerifiedContact = {
   verifiedSince: string
 }
 
+/**
+ * The partner's digital seal on an invoice: the partner signs the payment details with its own
+ * key, and KBC checks the seal with the partner's public key. `tampered` means the seal is real
+ * but the printed invoice no longer matches what the partner sealed.
+ */
+export type InvoiceSeal = {
+  status: 'valid' | 'tampered' | 'invalid' | 'revoked' | 'unknown-key' | 'malformed' | 'missing'
+  partner: string | null
+  keyId: string | null
+  signedOn: string | null
+  mismatches: { field: string; printed: string; signed: string }[]
+}
+
 export type TrustResult = {
   subject: 'invoice' | 'payee' | 'call' | 'website'
   score: number
@@ -27,6 +40,8 @@ export type TrustResult = {
   extracted: Record<string, string> | null
   verifiedContact: VerifiedContact | null
   network: { reports: number; lastReported: string | null } | null
+  /** Only for invoices from partners that seal, or invoices that carry a seal. */
+  seal: InvoiceSeal | null
   /** Time from the customer's request to the answer, measured in the app. */
   elapsedMs: number
 }
@@ -37,6 +52,7 @@ export type DemoDocument = { file: string; title: string; detail: string }
 export const demoDocuments: DemoDocument[] = [
   { file: 'proximus-invoice-october.pdf', title: 'Proximus invoice, October', detail: 'PDF from your email · 89.99 EUR' },
   { file: 'proximus-invoice-september.pdf', title: 'Proximus invoice, September', detail: 'PDF from your email · 64.50 EUR' },
+  { file: 'proximus-invoice-november.pdf', title: 'Proximus invoice, November', detail: 'PDF from your email · 64.50 EUR' },
 ]
 
 // Keep each check on screen long enough to read the steps, but well under the 5 second target.
@@ -98,7 +114,7 @@ export function resetDemo() {
 
 /** Steps shown while a check runs, so the customer sees what KBC Trust is doing. */
 export const checkSteps: Record<TrustResult['subject'], string[]> = {
-  invoice: ['Reading the document', 'Comparing with the verified sender', 'Checking reports from KBC customers'],
+  invoice: ['Reading the document', 'Checking the seal and the sender', 'Checking reports from KBC customers'],
   payee: ['Checking who owns this account', 'Comparing with your payment history', 'Checking reports from KBC customers'],
   call: ['Checking the caller’s number', 'Analysing voice and video', 'Checking reports from KBC customers'],
   website: ['Checking the web address', 'Comparing with verified partners', 'Checking reports from KBC customers'],

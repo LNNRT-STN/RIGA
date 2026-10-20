@@ -20,6 +20,7 @@ import { useApp, type TransferPrefill } from '../store'
 import { Amount } from '../ui'
 import { checkPayee, type TrustResult } from '../trust/api'
 import { CheckingSteps, SecondaryAction, TrustBadge, TrustVerdict } from '../trust/components'
+import { dataUse, proactivityLabel } from '../trust/controls'
 
 /** Bottom sheet behind the floating transfer button. */
 export function QuickPaySheet() {
@@ -295,25 +296,47 @@ function ReviewStage({
   onConfirm: () => void
   onCancel: () => void
 }) {
-  const { showToast, popToRoot } = useApp()
+  const { showToast, popToRoot, push, trustControls, logActivity } = useApp()
   const isBusiness = from.kind === 'business'
   // Results are keyed by the payee, so switching to the verified account starts a fresh check.
   const key = `${name.trim()}|${formatIban(iban)}|${isBusiness}`
   const [check, setCheck] = useState<{ key: string; result?: TrustResult; failed?: boolean } | null>(null)
+  // A check the customer started by hand for this payee, when automatic checks are off.
+  const [askedKey, setAskedKey] = useState<string | null>(null)
+  const [overrideKey, setOverrideKey] = useState<string | null>(null)
   const trust = check?.key === key ? (check.result ?? null) : null
   const failed = check?.key === key && check.failed === true
 
+  // The proactive check compares the payee with the customer's payment history, so it runs on its
+  // own only when the customer allows both. Otherwise the customer can start it once, by hand.
+  const autoCheck = trustControls.proactivity !== 'ask' && trustControls.data.payments
+  const runCheck = autoCheck || askedKey === key
+  const mode = trustControls.proactivity
+
   useEffect(() => {
+    if (!runCheck) return
     let current = true
     checkPayee({ name: name.trim(), iban: formatIban(iban), account: isBusiness ? 'business' : 'personal' })
-      .then((result) => current && setCheck({ key, result }))
+      .then((result) => {
+        if (!current) return
+        setCheck({ key, result })
+        const { used, kept } = dataUse('payee')
+        logActivity(`Checked a payment to ${name.trim()}`, `Used ${used}. ${kept} Result: ${result.headline}`)
+      })
       .catch(() => current && setCheck({ key, failed: true }))
     return () => {
       current = false
     }
-  }, [key, name, iban, isBusiness])
+  }, [runCheck, key, name, iban, isBusiness, logActivity])
 
-  if (trust?.decision === 'block') {
+  const guardianLine = isBusiness
+    ? `${business.ceo}, second approver at ${business.name}, has been informed.`
+    : trustControls.guardianAngel
+      ? `Your Guardian Angel ${guardianAngel.name} has been informed.`
+      : 'You chose not to inform a Guardian Angel.'
+
+  // "Stop risky payments" blocks; "Warn me, I decide" shows the same verdict but leaves the choice to the customer.
+  if (trust?.decision === 'block' && !(mode !== 'stop' && overrideKey === key)) {
     const contact = trust.verifiedContact
     return (
       <div className="px-4 pt-3 pb-10" aria-live="polite">
@@ -345,19 +368,39 @@ function ReviewStage({
           }
         />
         <p className="mt-4 rounded-[8px] bg-kbc-pale px-4 py-3 text-[13.5px] leading-[1.45] text-kbc-navy">
-          KBC Trust blocked this payment automatically. No money has left your account.{' '}
-          {isBusiness
-            ? `${business.ceo}, second approver at ${business.name}, has been informed.`
-            : `Your Guardian Angel ${guardianAngel.name} has been informed.`}
+          {mode === 'stop'
+            ? `KBC Trust stopped this payment, as you asked in What you share. No money has left your account. ${guardianLine}`
+            : 'You chose “Warn me, I decide”. No money has left your account yet.'}
         </p>
+        {mode !== 'stop' && (
+          <button
+            type="button"
+            onClick={() => {
+              setOverrideKey(key)
+              logActivity(`You chose to pay ${name.trim()} despite a warning`, `KBC Trust score ${trust.score}. Your choice, as set in What you share.`)
+            }}
+            className="mt-2 h-[48px] w-full rounded-full text-[16px] font-semibold text-kbc-danger"
+          >
+            I know this beneficiary, continue
+          </button>
+        )}
         <button type="button" onClick={popToRoot} className="mt-2 h-[48px] w-full rounded-full text-[17px] font-semibold text-kbc-link">
           Cancel payment
         </button>
+        <p className="mt-2 text-center text-[13px] text-kbc-muted">
+          KBC Trust setting: {proactivityLabel(mode)}.{' '}
+          <button type="button" onClick={() => push({ name: 'trust-data' })} className="font-semibold text-kbc-link underline underline-offset-2">
+            Change
+          </button>
+        </p>
       </div>
     )
   }
 
-  const canConfirm = trust !== null && trust.decision !== 'review'
+  // Secure4u review is part of "Stop risky payments"; with "Warn me, I decide" the customer confirms.
+  const needsReview = trust?.decision === 'review' && mode === 'stop'
+  const unchecked = !runCheck
+  const canConfirm = unchecked || failed || (trust !== null && !needsReview)
 
   return (
     <div className="px-4 pt-4 pb-10">
@@ -379,19 +422,40 @@ function ReviewStage({
       </dl>
 
       <div aria-live="polite" className="mt-2">
-        {!trust && !failed && <CheckingSteps subject="payee" />}
+        {unchecked && (
+          <div className="rounded-[12px] bg-kbc-pale px-4 py-3">
+            <p className="text-[14.5px] font-bold text-kbc-navy">KBC Trust didn’t check this beneficiary</p>
+            <p className="mt-1 text-[13.5px] leading-[1.45] text-kbc-navy">
+              {trustControls.data.payments
+                ? 'You asked KBC Trust to check only when you ask.'
+                : 'You switched off payment history, so KBC Trust can’t compare this payment with earlier ones.'}
+            </p>
+            <div className="mt-3">
+              <SecondaryAction onClick={() => setAskedKey(key)}>
+                {trustControls.data.payments ? 'Check this beneficiary' : 'Allow once and check'}
+              </SecondaryAction>
+            </div>
+            <p className="mt-2 text-[12.5px] leading-[1.45] text-kbc-muted">
+              A check uses {dataUse('payee').used}. {dataUse('payee').kept}{' '}
+              <button type="button" onClick={() => push({ name: 'trust-data' })} className="font-semibold text-kbc-link underline underline-offset-2">
+                What you share
+              </button>
+            </p>
+          </div>
+        )}
+        {runCheck && !trust && !failed && <CheckingSteps subject="payee" />}
         {failed && (
           <p className="rounded-[8px] bg-kbc-warning-bg px-4 py-3 text-[13.5px] leading-[1.4] text-kbc-warning">
             KBC Trust could not check this account right now. Only continue if you know the beneficiary.
           </p>
         )}
-        {trust && trust.decision !== 'allow' && <TrustVerdict result={trust} />}
+        {trust && trust.decision !== 'allow' && <TrustVerdict result={trust} onManageData={() => push({ name: 'trust-data' })} />}
       </div>
 
       <p className="mt-4 rounded-[8px] bg-kbc-warning-bg px-4 py-3 text-[13.5px] leading-[1.4] text-kbc-warning">
         Demo: this transfer is simulated with fictional data.
       </p>
-      {trust?.decision === 'review' ? (
+      {needsReview ? (
         <button
           type="button"
           onClick={() => {
@@ -406,10 +470,10 @@ function ReviewStage({
         <button
           type="button"
           onClick={onConfirm}
-          disabled={!canConfirm && !failed}
+          disabled={!canConfirm}
           className="mt-6 h-[48px] w-full rounded-full bg-kbc-blue text-[17px] font-semibold text-white transition-[transform,opacity] duration-150 active:scale-[0.98] disabled:opacity-50"
         >
-          {!trust && !failed ? 'Checking the beneficiary' : 'Confirm transfer'}
+          {canConfirm ? 'Confirm transfer' : 'Checking the beneficiary'}
         </button>
       )}
       <button type="button" onClick={onCancel} className="mt-2 h-[48px] w-full rounded-full text-[17px] font-semibold text-kbc-link">

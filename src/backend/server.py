@@ -1,4 +1,4 @@
-"""KBC Trust demo API, Python standard library only.
+"""KBC Trust demo API, Python standard library plus `cryptography` for invoice seals.
 
 Run from anywhere:  python3 src/backend/server.py
 Port: env PORT (set by Cloud Run) or KBC_TRUST_PORT (default 8787). Host: env HOST
@@ -24,6 +24,7 @@ if HERE not in sys.path:
 import partners  # noqa: E402
 import pdf_text  # noqa: E402
 import registry as reg  # noqa: E402
+import seal  # noqa: E402
 import trust  # noqa: E402
 
 DEMO_DIR = os.path.normpath(os.path.join(HERE, "..", "frontend", "public", "demo"))
@@ -77,8 +78,10 @@ def invoice_endpoint(body):
         # Fallback: an upload of one of the demo samples whose text we can't
         # read (e.g. re-saved with compressed streams) is matched by file name.
         if name in demo_samples():
-            text = pdf_text.extract_text(read_sample(name)[1])
-    return trust.check_invoice_text(text, started=started, file_name=name)
+            data = read_sample(name)[1]
+            text = pdf_text.extract_text(data)
+    return trust.check_invoice_text(text, started=started, file_name=name,
+                                    seal_tokens=pdf_text.extract_seals(data))
 
 
 def payee_endpoint(body):
@@ -176,6 +179,9 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, {"ok": True})
         elif self._path() == "/api/partners":
             self._send(200, partners.directory())
+        elif self._path() == "/api/trust/keys":
+            # Partner public keys for invoice seals, as a JWK set (RFC 7517 and 8037).
+            self._send(200, {"keys": reg.public_keys()})
         elif STATIC_DIR and not self._path().startswith("/api/"):
             self._send_static()
         else:
@@ -232,6 +238,8 @@ def main():
     host = os.environ.get("HOST", "127.0.0.1")
     httpd = ThreadingHTTPServer((host, port), Handler)
     print("KBC Trust demo API on http://%s:%d (simulated data)" % (host, port), flush=True)
+    if not seal.available():
+        print("Invoice seals are OFF: run pip install -r src/backend/requirements.txt", flush=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
