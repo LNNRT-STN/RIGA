@@ -18,10 +18,6 @@ export type TourStep = {
   chapter?: string
   title: string
   body: string
-  /** Where to look, so the visitor finds the moment on the phone or in the portal. */
-  look?: string
-  /** Shown in small print when the step relies on something simulated. */
-  note?: string
   enter: (ctx: TourContext) => void | Promise<void>
 }
 
@@ -35,15 +31,14 @@ export const tourSteps: TourStep[] = [
   {
     id: 'welcome',
     title: 'Is this real?',
-    body: 'Fraudsters copy invoices, voices and websites. KBC Trust lets Kate check them inside KBC Mobile, before any money leaves.',
+    body: 'Kate checks invoices, callers and websites inside KBC Mobile, before any money leaves.',
     enter: ({ showPortal }) => showPortal(null),
   },
   {
     id: 'home',
     chapter: 'Meet Laura',
     title: 'Meet Laura',
-    body: 'Laura banks with KBC and pays the bills for Noord Design, a small company. Everything you’ll see runs in the KBC Mobile app she already uses.',
-    look: 'MyTrust on Home holds her KBC Trust choices.',
+    body: 'Laura pays the bills for her small company in the KBC Mobile app she already uses.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('home')
@@ -53,8 +48,7 @@ export const tourSteps: TourStep[] = [
     id: 'invoice',
     chapter: 'Check before you pay',
     title: 'A fake Proximus invoice',
-    body: 'Laura asks Kate whether an invoice in her inbox is real. KBC Trust compares it with what Proximus registered at KBC.',
-    look: 'Wrong sender domain, an account 37 customers reported, and the real Proximus number to call.',
+    body: 'Kate blocks this invoice: it comes from a fake Proximus domain, and 37 customers reported its account.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('invoice-checked')
@@ -64,8 +58,7 @@ export const tourSteps: TourStep[] = [
     id: 'sealed',
     chapter: 'Check before you pay',
     title: 'A sealed invoice',
-    body: 'Proximus signs the payment details of every invoice with its own key. KBC checks that seal, so a genuine invoice is Verified by KBC.',
-    look: 'Pay this invoice fills in the transfer for her.',
+    body: 'Proximus sealed this invoice with its own key, so KBC marks it Verified by KBC.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('sealed')
@@ -75,8 +68,7 @@ export const tourSteps: TourStep[] = [
     id: 'tampered',
     chapter: 'Check before you pay',
     title: 'Changed after sealing',
-    body: 'This invoice looks perfect. But someone swapped the account number after Proximus sealed it.',
-    look: 'KBC shows the printed and the sealed account number side by side.',
+    body: 'Someone swapped the account number after sealing, and KBC shows exactly what changed.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('tampered')
@@ -86,9 +78,7 @@ export const tourSteps: TourStep[] = [
     id: 'call',
     chapter: 'Stop it as it happens',
     title: 'A deepfake CEO call',
-    body: 'Laura’s CEO video calls: pay €48,500.00 to a new account today, and keep it quiet. KBC Trust checks the caller during the call.',
-    look: 'The warning lands on top of the call, with his real number.',
-    note: 'Voice and video analysis is simulated in this prototype.',
+    body: 'KBC Trust spots a deepfake of Laura’s CEO asking for €48,500.00, while the call is still live.',
     enter: ({ showPortal, later }) => {
       showPortal(null)
       startDemo('call')
@@ -99,8 +89,7 @@ export const tourSteps: TourStep[] = [
     id: 'supplier',
     chapter: 'Stop it as it happens',
     title: 'A supplier’s new account',
-    body: 'An email says Van Damme Packaging changed banks. When Laura pays their €12,480.00 invoice, KBC checks who owns the new account.',
-    look: 'The transfer stops on the review screen, before any money leaves.',
+    body: 'KBC stops a €12,480.00 payment, because the new account doesn’t belong to Van Damme Packaging.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('supplier-review')
@@ -110,8 +99,7 @@ export const tourSteps: TourStep[] = [
     id: 'control',
     chapter: 'Laura stays in control',
     title: 'Laura decides',
-    body: 'She chooses what KBC Trust may use, how proactive it is, and which companies may send her invoices. Every check is logged.',
-    look: 'Each choice is one switch, and What KBC Trust did lists every check.',
+    body: 'Laura chooses what KBC Trust may use, and sees a log of every check it ran.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('control')
@@ -121,7 +109,7 @@ export const tourSteps: TourStep[] = [
     id: 'consent',
     chapter: 'Laura stays in control',
     title: 'Kate asks first',
-    body: 'Laura switched off document checks. So Kate asks before she opens an invoice: this one only, always, or not now.',
+    body: 'With document checks switched off, Kate asks before she opens an invoice.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('consent-asked')
@@ -131,8 +119,7 @@ export const tourSteps: TourStep[] = [
     id: 'partner-before',
     chapter: 'Companies join',
     title: 'A website KBC doesn’t know',
-    body: 'Laura asks about zonnigreizen.be, a travel agency. It isn’t a KBC partner yet, so Kate can’t vouch for it.',
-    look: 'Kate says: we could not verify this website.',
+    body: 'Kate can’t vouch for zonnigreizen.be, because the company isn’t a KBC partner yet.',
     enter: async ({ showPortal, current }) => {
       showPortal(null)
       await freshPartners()
@@ -143,8 +130,7 @@ export const tourSteps: TourStep[] = [
     id: 'partner-signup',
     chapter: 'Companies join',
     title: 'The company signs up',
-    body: 'Zonnig Reizen enters its enterprise number. KBC pulls the company register and suggests its website, phone and account.',
-    look: 'Next, the company proves its domains and accounts are its own.',
+    body: 'The travel agency signs up with its enterprise number, and KBC reads its details from the company register.',
     enter: async ({ showPortal, current }) => {
       await freshPartners()
       if (current()) showPortal('fill')
@@ -154,8 +140,7 @@ export const tourSteps: TourStep[] = [
     id: 'partner-live',
     chapter: 'Companies join',
     title: 'Verified by KBC',
-    body: 'Register, account holder, domains and scam reports all check out, so Zonnig Reizen goes live at once.',
-    look: 'It also gets an API key to seal its own invoices.',
+    body: 'Every check passes, so Zonnig Reizen is Verified by KBC at once.',
     enter: async ({ showPortal, current }) => {
       await freshPartners()
       if (current()) showPortal('submit')
@@ -165,7 +150,7 @@ export const tourSteps: TourStep[] = [
     id: 'partner-after',
     chapter: 'Companies join',
     title: 'Same question, new answer',
-    body: 'Laura asks again. Now Kate confirms zonnigreizen.be belongs to a company KBC verified.',
+    body: 'Laura asks again, and now Kate confirms the website is real.',
     enter: ({ showPortal, roomForBoth }) => {
       // On narrow screens the portal would hide the phone, and the answer is on the phone.
       if (!roomForBoth()) showPortal(null)
@@ -175,7 +160,7 @@ export const tourSteps: TourStep[] = [
   {
     id: 'finish',
     title: 'That’s KBC Trust',
-    body: 'Kate checks invoices, callers and websites against what verified companies registered at KBC. Laura decides what it may use.',
+    body: 'Kate checks against what verified companies registered at KBC, and Laura decides what it may use.',
     enter: ({ showPortal }) => {
       showPortal(null)
       startDemo('home')

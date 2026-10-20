@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { ArrowLeft, ArrowRight, Eye, Play, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Play, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { KbcWordmark } from '@/kbc/ui'
 import { tourSteps, type TourContext } from './steps'
@@ -89,8 +89,8 @@ export function GuidedTour({ index, onIndex, onClose, context, onCardHeight }: P
       className={cn(
         'kbc z-[100] flex flex-col bg-white text-kbc-navy shadow-[0_12px_32px_rgba(0,59,113,0.14)]',
         // Small screens: a card over the bottom of the screen. Large screens: a column next to the phone.
-        'fixed inset-x-3 bottom-3 mx-auto min-h-[228px] max-w-[480px] rounded-[16px] p-4 sm:inset-x-4 sm:bottom-4 sm:min-h-[300px] sm:p-5',
-        'lg:static lg:mx-0 lg:min-h-[540px] lg:w-[320px] xl:w-[360px] lg:max-w-none lg:shrink-0 lg:self-center lg:rounded-[20px] lg:p-7',
+        'fixed inset-x-3 bottom-3 mx-auto min-h-[204px] max-w-[480px] rounded-[16px] p-4 sm:inset-x-4 sm:bottom-4 sm:min-h-[220px] sm:p-5',
+        'lg:static lg:mx-0 lg:min-h-[400px] lg:w-[320px] xl:w-[360px] lg:max-w-none lg:shrink-0 lg:self-center lg:rounded-[20px] lg:p-7',
       )}
     >
       <div className="flex items-center justify-between gap-3">
@@ -124,19 +124,12 @@ export function GuidedTour({ index, onIndex, onClose, context, onCardHeight }: P
           {step.title}
         </h2>
         <p className="mt-2 text-[15px] leading-[1.5] text-pretty sm:text-[16px] lg:mt-3 lg:text-[16.5px]">{step.body}</p>
-        {step.look && (
-          <p className="mt-3 hidden items-start gap-2 rounded-[12px] bg-kbc-surface-blue px-3 py-[10px] text-[14.5px] leading-[1.45] sm:flex lg:mt-4">
-            <Eye className="mt-[2px] size-[17px] shrink-0 text-kbc-blue" strokeWidth={1.8} />
-            <span>{step.look}</span>
-          </p>
-        )}
-        {step.note && <p className="mt-2 text-[13px] leading-[1.4] text-kbc-muted">{step.note}</p>}
         {isFirst && (
           <p className="mt-3 text-[14px] text-kbc-muted lg:mt-4">
-            {storySteps.length} short steps, about 3 minutes. Press Next, the tour does the tapping.
+            {storySteps.length} steps, about 3 minutes. The tour does the tapping.
           </p>
         )}
-        {isLast && <p className="mt-3 text-[13px] leading-[1.4] text-kbc-muted">All people, companies and amounts are fictional. Transfers are simulated.</p>}
+        {isLast && <p className="mt-3 text-[13px] leading-[1.4] text-kbc-muted">All people, companies and amounts are fictional. Transfers and call analysis are simulated.</p>}
       </div>
 
       {/* Controls sit at the bottom of a fixed-height card, so Next stays under the pointer on every step. */}
@@ -181,9 +174,6 @@ export function GuidedTour({ index, onIndex, onClose, context, onCardHeight }: P
               <ArrowRight className="size-[18px]" strokeWidth={2} />
             </PrimaryButton>
           </div>
-          <p className="mt-3 hidden text-[12.5px] text-kbc-muted lg:block">
-            Use the <Key>←</Key> and <Key>→</Key> keys to move through the tour.
-          </p>
         </div>
       )}
     </section>
@@ -236,14 +226,6 @@ function PrimaryButton({
     >
       {children}
     </button>
-  )
-}
-
-function Key({ children }: { children: React.ReactNode }) {
-  return (
-    <kbd className="mx-[2px] inline-grid h-[20px] min-w-[20px] place-items-center rounded-[5px] border border-kbc-line bg-white px-1 font-sans text-[12px] font-bold text-kbc-navy">
-      {children}
-    </kbd>
   )
 }
 
