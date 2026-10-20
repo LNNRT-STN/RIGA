@@ -25,7 +25,7 @@ Use this workflow for implementation, review, and integration work in RIGA.
    ```
 
    Use short, unique branch and directory names. Run that agent from its new worktree.
-3. Read the repository instructions and the files relevant to the assignment. For UI work, consult `DESIGN.md`; consult only relevant sections of `KBC_information.md` for product background. Check open PRs or ask the integration lead when another task may touch the same files or interface.
+3. Read the repository instructions and the files relevant to the assignment. For UI work, consult `DESIGN.md`; consult only relevant sections of `design/KBC_Bank_Brand_and_Features.md` for product background. Check open PRs or ask the integration lead when another task may touch the same files or interface.
 
 ## Deliver and integrate
 
