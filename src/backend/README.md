@@ -1,7 +1,9 @@
 # KBC Trust demo backend
 
 Python 3 standard library, plus `cryptography` for the digital invoice seal. Without it the
-server still runs and prints that invoice seals are off.
+server still runs and prints that invoice seals are off. Kate's free chat replies use an LLM
+through OpenRouter (`OPENROUTER_API_KEY` from the environment or the root `.env`); without a key
+the server still runs and the app uses its scripted replies.
 
 ## Run
 
@@ -28,6 +30,7 @@ All JSON, CORS `*`. Every `/api/trust/*` check except `report` returns a TrustRe
 | POST | `/api/trust/call` | `{"scenario": "ceo-deepfake"}` or `{"callerNumber", "claimedName", "hasVideo", "request"?}` |
 | POST | `/api/trust/website` | `{"url"}` |
 | POST | `/api/trust/report` | `{"iban"}` or `{"number"}`, returns `{"reports", "message"}` |
+| POST | `/api/kate/chat` | `{"message", "history"?: [{"from": "user" \| "kate", "text"}], "context"?: {"customer", "accounts"}}`, returns `{"text", "model"}`, or 503 when the LLM is unavailable |
 | POST | `/api/demo/reset` | `{}`, restores report counts and removes partners added through sign-up |
 | GET | `/api/partners` | none, returns the verified partner directory, `count`, modules and sectors |
 | POST | `/api/partners/lookup` | `{"enterpriseNumber"}`, returns the register extract and suggested details |
@@ -77,7 +80,11 @@ private keys it makes new ones and re-seals every PDF, so the two always match.
   (`difflib`), IBAN and phone matching, urgency and bank-change wording, payment history,
   scoring and verdict text. Partner sign-up: enterprise number and IBAN checksums (mod 97),
   account holder match, lookalike and duplicate checks against verified partners, network reports.
-  No LLM is used anywhere.
+  No LLM takes part in any trust check or verdict.
+- **LLM (`kate.py`):** only Kate's free chat replies, written by `anthropic/claude-haiku-5.5`
+  through OpenRouter (override with `KATE_MODEL`). The app labels them "Answer written by AI".
+  Questions about balance, transfers, KBC Live or "is this real" keep their scripted reply and
+  button, and the prompt tells Kate to send trust questions to the KBC Trust checks.
 - **Real cryptography:** the invoice seal is a real Ed25519 signature check.
 - **Simulated:** the partner keys (fictional demo keys), the partner registry, account holder names (Verification of Payee),
   account ages, network report counts and people in `registry.py` are synthetic.

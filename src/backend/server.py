@@ -21,6 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
+import kate  # noqa: E402
 import partners  # noqa: E402
 import pdf_text  # noqa: E402
 import registry as reg  # noqa: E402
@@ -123,6 +124,17 @@ def reset_endpoint(_body):
     return {"ok": True}
 
 
+def kate_chat_endpoint(body):
+    message = str(body.get("message") or "").strip()
+    if not message:
+        raise ApiError(400, "Missing message")
+    try:
+        return kate.reply(message, body.get("history"), body.get("context"))
+    except kate.KateUnavailable as err:
+        sys.stderr.write("Kate LLM unavailable: %s\n" % err)
+        raise ApiError(503, "Kate's AI replies are unavailable right now")
+
+
 def partner_lookup_endpoint(body):
     return partners.lookup(body.get("enterpriseNumber"))
 
@@ -142,6 +154,7 @@ POST_ROUTES = {
     "/api/trust/website": website_endpoint,
     "/api/trust/report": report_endpoint,
     "/api/demo/reset": reset_endpoint,
+    "/api/kate/chat": kate_chat_endpoint,
     "/api/partners/lookup": partner_lookup_endpoint,
     "/api/partners/dns": partner_dns_endpoint,
     "/api/partners/apply": partner_apply_endpoint,
@@ -240,6 +253,8 @@ def main():
     print("KBC Trust demo API on http://%s:%d (simulated data)" % (host, port), flush=True)
     if not seal.available():
         print("Invoice seals are OFF: run pip install -r src/backend/requirements.txt", flush=True)
+    if not kate.api_key():
+        print("Kate's AI replies are OFF: set OPENROUTER_API_KEY in .env", flush=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

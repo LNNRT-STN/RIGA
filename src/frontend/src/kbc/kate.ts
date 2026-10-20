@@ -1,20 +1,50 @@
-import type { Account } from './data'
+import { customer, type Account } from './data'
 import { formatAmount } from './format'
 
 export type KateAction = { label: string; action: 'transfer' | 'account' | 'call' | 'upload' }
 
-export type KateReply = { text: string; actions?: KateAction[] }
+/** `ai` marks a reply written by the LLM in the backend, so the chat can label it. */
+export type KateReply = { text: string; actions?: KateAction[]; ai?: boolean }
+
+export type KateTurn = { from: 'user' | 'kate'; text: string }
 
 export const kateSuggestions = ['Is this real?', 'When can I call?', 'What can you do?', 'Make a transfer', 'What is my balance?']
 
 /**
- * Scripted replies for the demo. Replace this function with a call to the team's backend to put
- * the real assistant inside the app; the chat screen only depends on this signature.
+ * Questions that lead to an app action (balance, transfer, KBC Live, a trust check) keep their
+ * scripted reply and button. Anything else goes to the LLM in the backend (`/api/kate/chat`);
+ * when it can't answer, Kate falls back to her scripted reply.
  */
-export async function getKateReply(message: string, context: { accounts: Account[] }): Promise<KateReply> {
-  await new Promise((resolve) => window.setTimeout(resolve, 900))
+export async function getKateReply(
+  message: string,
+  context: { accounts: Account[]; history?: KateTurn[] },
+): Promise<KateReply> {
+  const scripted = scriptedReply(message, context.accounts)
+  if (scripted) {
+    await new Promise((resolve) => window.setTimeout(resolve, 900))
+    return scripted
+  }
+  try {
+    const response = await fetch('/api/kate/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        history: context.history ?? [],
+        context: { customer: customer.firstName, accounts: context.accounts },
+      }),
+    })
+    if (!response.ok) throw new Error(`Kate returned ${response.status}`)
+    const { text } = (await response.json()) as { text: string }
+    return { text, ai: true }
+  } catch {
+    return fallbackReply(message)
+  }
+}
+
+function scriptedReply(message: string, accounts: Account[]): KateReply | null {
   const text = message.toLowerCase()
-  const current = context.accounts.find((a) => a.kind === 'current')
+  const current = accounts.find((a) => a.kind === 'current')
 
   if (/(balance|how much|saldo)/.test(text) && current) {
     return {
@@ -45,7 +75,11 @@ export async function getKateReply(message: string, context: { accounts: Account
       text: 'I can show your balance and payments, help you make a transfer, check whether an invoice, caller or website is real, or find the right person to talk to. Just ask.',
     }
   }
-  if (/(dream|save)/.test(text)) {
+  return null
+}
+
+function fallbackReply(message: string): KateReply {
+  if (/(dream|save)/.test(message.toLowerCase())) {
     return {
       text: 'Great idea. Tell me what you are saving for and roughly when, and I will suggest a monthly amount you can put aside.',
     }
