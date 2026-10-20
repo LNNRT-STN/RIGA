@@ -35,16 +35,6 @@ export const tourSteps: TourStep[] = [
     enter: ({ showPortal }) => showPortal(null),
   },
   {
-    id: 'home',
-    chapter: 'Meet Laura',
-    title: 'Meet Laura',
-    body: 'Laura pays the bills for her small company.',
-    enter: ({ showPortal }) => {
-      showPortal(null)
-      startDemo('home')
-    },
-  },
-  {
     id: 'invoice',
     chapter: 'Check before you pay',
     title: 'A fake Proximus invoice',
