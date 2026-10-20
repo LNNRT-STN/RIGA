@@ -113,7 +113,16 @@ function SheetRow({ icon: Icon, label, onClick }: { icon: LucideIcon; label: str
 
 type Stage = 'form' | 'review' | 'processing' | 'done'
 
-export function TransferScreen({ beneficiaryId, prefill }: { beneficiaryId?: string; prefill?: TransferPrefill }) {
+/** `startInReview` opens a complete prefill on the review screen, for the guided tour. */
+export function TransferScreen({
+  beneficiaryId,
+  prefill,
+  startInReview = false,
+}: {
+  beneficiaryId?: string
+  prefill?: TransferPrefill
+  startInReview?: boolean
+}) {
   const { accounts, makeTransfer, pop, popToRoot } = useApp()
   const preset = beneficiaries.find((b) => b.id === beneficiaryId)
   const [fromId, setFromId] = useState(prefill?.fromId ?? (beneficiaryId === 'own' ? 'savings' : 'current'))
@@ -122,7 +131,7 @@ export function TransferScreen({ beneficiaryId, prefill }: { beneficiaryId?: str
   const [iban, setIban] = useState(prefill?.iban ?? preset?.iban ?? ownTarget?.iban ?? '')
   const [amountText, setAmountText] = useState(prefill?.amount ?? '')
   const [message, setMessage] = useState(prefill?.message ?? '')
-  const [stage, setStage] = useState<Stage>('form')
+  const [stage, setStage] = useState<Stage>(startInReview && prefill ? 'review' : 'form')
   const [errors, setErrors] = useState<Partial<Record<'name' | 'iban' | 'amount', string>>>({})
   const [reference, setReference] = useState('')
 

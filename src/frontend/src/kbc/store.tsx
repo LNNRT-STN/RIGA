@@ -9,7 +9,7 @@ export type Route =
   | { name: 'kate'; prompt?: string; attach?: boolean; document?: string; run?: number }
   | { name: 'settings' }
   | { name: 'messages' }
-  | { name: 'transfer'; beneficiaryId?: string; prefill?: TransferPrefill }
+  | { name: 'transfer'; beneficiaryId?: string; prefill?: TransferPrefill; review?: boolean }
   | { name: 'trust' }
   | { name: 'trust-data' }
   | { name: 'invoices' }
